@@ -19,6 +19,10 @@ sigma1 = np.array([[1, 0],[ 0,1]]) # mean and standard deviation
 mu2 = np.array([1, 1]) # mean and standard deviation
 sigma2 = np.array([[1, 0],[ 0,1]]) # mean and standard deviation
 
+# mu1 = np.array([0]) # mean and standard deviation
+# sigma1 = np.array([1]) # mean and standard deviation
+# mu2 = np.array([1]) # mean and standard deviation
+# sigma2 = np.array([1]) # mean and standard deviation
 
 dim = len(mu1)
 
@@ -56,10 +60,16 @@ for repeat in range(how_many_times_repeat):
     for itera in range(iterations):
 
         which_normal = random.randint(1,2)
-        if which_normal == 1:
-            random_simulation[itera,] = np.random.multivariate_normal(mu1, sigma1)
+        if dim == 1:
+            if which_normal == 1:
+                random_simulation[itera,] = np.random.normal(mu1, sigma1)
+            else:
+                random_simulation[itera,] = np.random.normal(mu2, sigma2)
         else:
-            random_simulation[itera,] = np.random.multivariate_normal(mu2, sigma2)
+            if which_normal == 1:
+                random_simulation[itera,] = np.random.multivariate_normal(mu1, sigma1)
+            else:
+                random_simulation[itera,] = np.random.multivariate_normal(mu2, sigma2)
         which_class_list[itera,] = which_normal
     
     testing_data.append(random_simulation)
@@ -76,8 +86,16 @@ for nt_index in range(len(list_nt)):
     size2 = nt
 
     # generate from normal distrib
-    s1 = np.random.multivariate_normal(mu1, sigma1, size1)
-    s2 = np.random.multivariate_normal(mu2, sigma2, size2)
+    if dim == 1:
+        
+        s1 = np.random.normal(mu1, sigma1, size1)
+        s2 = np.random.normal(mu2, sigma2, size2)
+        
+    else:
+        
+        s1 = np.random.multivariate_normal(mu1, sigma1, size1)
+        s2 = np.random.multivariate_normal(mu2, sigma2, size2)
+            
 
 
     for bin_size_index in range(len(list_b)):
