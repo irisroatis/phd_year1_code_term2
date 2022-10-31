@@ -14,6 +14,8 @@ import scipy.stats
 from mpl_toolkits import mplot3d
 import random
 
+##### testing github
+
 mu1 = np.array([0, 0]) # mean and standard deviation
 sigma1 = np.array([[1, 0],[ 0,1]]) # mean and standard deviation
 mu2 = np.array([1, 1]) # mean and standard deviation
