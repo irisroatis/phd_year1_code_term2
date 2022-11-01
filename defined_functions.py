@@ -65,3 +65,19 @@ def lda_predict(x, alpha, c):
         predicted_class = 1
     return predicted_class
 
+
+def tprfpr(actual, predicted):
+    falseneg, falsepos, truepos, trueneg = 0, 0, 0, 0
+    for i in range(len(actual)):
+        if actual[i] == 2 and predicted[i] ==1 :
+            falsepos += 1
+        if actual[i] == 1 and predicted[i] == 1 :
+            truepos += 1
+        if actual[i] == 1 and predicted[i] == 2 :
+            falseneg += 1
+        if actual[i] == 2 and predicted[i] == 2 :
+            trueneg += 1
+    tpr = truepos / (truepos + falseneg)
+    fpr = falsepos / (falsepos + trueneg)
+    return tpr, fpr
+
