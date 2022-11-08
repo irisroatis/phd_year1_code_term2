@@ -147,3 +147,96 @@ def generating_test_data(how_many_times_repeat, iterations, mu1, sigma1, mu2,
     
     return testing_data, belonging_classes
     
+
+####### FUNCTIONS FOR kNN
+
+
+def euclidian_distance(p, q):
+    '''
+    
+    Parameters
+    ----------
+    p, q : D x 1 vectors
+        Two points in our D-dimensional Euclidean Space
+
+    Returns
+    -------
+    eucl : float
+        It outputs the Euclidean Distance d(p,q).
+
+    '''
+    eucl = np.sqrt(np.sum((p-q)**2, axis=1))
+    return eucl
+
+
+def k_neighbours(X_train, X_test, k, return_distance=False):
+    '''
+     Parameters
+    ----------
+    X_train: N x M matrix
+        The dataset of points which are the set of the neighbours.
+    X_test : K x D matrix
+        The dataset of points for which the neighbours will be found.
+    k : integer
+        The number of neighbours.
+    return_distance : boolean
+        Return or not the distance.
+
+    Returns
+    -------
+    neigh_ind : list
+        List containing the indices of the k nearest neighbours.
+
+    '''
+    n_neighbours = k
+    dist = []
+    neigh_ind = []
+  
+    # compute distance from each point x_text in X_test to all points in X_train (hint: use python's list comprehension)
+    point_dist = [euclidian_distance(x_test, X_train) for x_test in X_test] 
+
+    # determine which k training points are closest to each test point
+    for row in point_dist:
+        enum_neigh = enumerate(row)
+        sorted_neigh = sorted(enum_neigh, key=lambda x: x[1])[:k]
+
+        ind_list = [tup[0] for tup in sorted_neigh]
+        dist_list = [tup[1] for tup in sorted_neigh]
+
+        dist.append(dist_list)
+        neigh_ind.append(ind_list)
+  
+    # return distances together with indices of k nearest neighbouts
+    if return_distance:
+        return np.array(dist), np.array(neigh_ind)
+  
+    return neigh_ind
+
+
+def reg_predict(X_train, X_test, y_train, k):
+    '''
+     Parameters
+    ----------
+    X_train: N x M matrix
+        The dataset of points which are the set of the neighbours.
+    X_test : K x D matrix
+        The dataset of points for which we predict the target variables.
+    y_train : N x 1 vector
+        The target variable for the test set.
+    k : integer
+        Number of neighbours.
+
+    Returns
+    -------
+    y_pred : K x 1 vector
+        Predicted target variables for test data.
+
+    '''
+    # each of the k neighbours contributes equally to the classification of any data point in X_test  
+    neighbours = np.array(k_neighbours(X_train, X_test, k))
+    # compute mean over neighbours labels 
+    y_pred = np.array([np.mean(y_train[neighbour]) for neighbour in neighbours]) 
+    return y_pred
+
+
+
