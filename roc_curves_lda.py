@@ -34,8 +34,8 @@ dim = len(mu1) # dimension of the problem
 iterations = 1000 # length of each sample in a single experiment
 how_many_times_repeat = 1 # how many experiments wanted
 
-value_b1 = 2 # approximate bin size
-value_nt1 = 3 # size of training sample from one normal
+value_b = 2 # approximate bin size
+value_nt = 3 # size of training sample from one normal
 
 
 
@@ -54,9 +54,9 @@ testing_data, belonging_classes = generating_test_data(how_many_times_repeat,
 
 
     
-size1 = value_nt1
-size2 = value_nt1
-bin_size = value_b1
+size1 = value_nt
+size2 = value_nt
+bin_size = value_b
 
 # generate from normal distrib
 if dim == 1:
@@ -150,12 +150,12 @@ for t in try_values_for_t:
 
 
 
-value_b2 = 0.0001 # approximate bin size
-value_nt2 = 1000 # size of training sample from one normal 
+value_b = 0.0001 # approximate bin size
+value_nt = 1000 # size of training sample from one normal 
 
-size1 = value_nt2
-size2 = value_nt2
-bin_size = value_b2
+size1 = value_nt
+size2 = value_nt
+bin_size = value_b
 
 # generate from normal distrib
 if dim == 1:
@@ -169,7 +169,7 @@ else:
 # bins are created around 0 (one bin is set with ends in 0 and outwards
 # from there)
 bins = np.arange(0,100,bin_size)
-bins = np.concatenate((-bins[::-2], bins))
+bins = np.concatenate((-bins[::-1], bins))
 
 # bins = np.linspace(-100,100,int(200//bin_size))
 
@@ -255,10 +255,10 @@ x = np.linspace(0,1,100)
 
 plt.figure()
 for i in range(len(list_tpr)):
-    plt.plot(np.mean(list_fpr[i]),np.mean(list_tpr[i]),'r.-',label='$n_t$ = '+str(value_nt1) +', $b$ = '+str(value_b1))
-    plt.plot(np.mean(list_fpr2[i]),np.mean(list_tpr2[i]),'y.-',label = '$n_t$ = '+str(value_nt2) +', $b$ = '+str(value_b2))
+    plt.plot(np.mean(list_fpr[i]),np.mean(list_tpr[i]),'r.-')
+    plt.plot(np.mean(list_fpr2[i]),np.mean(list_tpr2[i]),'y.-')
 plt.plot(x,x)
 plt.xlabel('fpr')
 plt.ylabel('tpr')
-plt.title('$n_t$ = '+str(value_nt) +', $b$ = '+str(value_b))
+# plt.title('$n_t$ = '+str(value_nt) +', $b$ = '+str(value_b))
 plt.show()
