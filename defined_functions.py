@@ -213,7 +213,7 @@ def k_neighbours(X_train, X_test, k, return_distance=False):
     return neigh_ind
 
 
-def reg_predict(X_train, X_test, y_train, k):
+def reg_predict(X_train, X_test, y_train, k, threshold):
     '''
      Parameters
     ----------
@@ -233,10 +233,19 @@ def reg_predict(X_train, X_test, y_train, k):
 
     '''
     # each of the k neighbours contributes equally to the classification of any data point in X_test  
-    neighbours = np.array(k_neighbours(X_train, X_test, k))
-    # compute mean over neighbours labels 
-    y_pred = np.array([np.mean(y_train[neighbour]) for neighbour in neighbours]) 
+    neighbours = k_neighbours(X_train, X_test, k)
+    y_pred = []
+    for index in range(len(neighbours)):
+
+        y_of_neigh = y_train[neighbours[index],].tolist()
+
+        how_many_classes_one = y_of_neigh.count(1)
+        if how_many_classes_one / k >= threshold:
+            y_pred.append(1)
+        else:
+            y_pred.append(2)
     return y_pred
 
-
+def count_ones(List):
+    return len(List[List == 1])
 
