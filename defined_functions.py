@@ -249,3 +249,32 @@ def reg_predict(X_train, X_test, y_train, k, threshold):
 def count_ones(List):
     return len(List[List == 1])
 
+
+
+def roc_kNN(X, y, testing_data, belonging_classes, list_of_thresholds, how_many_times_repeat, k):
+    
+    list_fpr = []
+    list_tpr = []
+    list_accuracy = []
+    
+    for t in list_of_thresholds:
+        tpr = 0
+        fpr = 0
+        accuracy = 0
+        for repeat in range(how_many_times_repeat):
+            predicted_classes_kNN = reg_predict(X, testing_data[repeat], y, k, threshold=t)
+            results = tprfpr(belonging_classes[repeat], predicted_classes_kNN, accuracy = True)
+            tpr += results[0]
+            fpr += results[1]
+            accuracy += results[2]
+        tpr /= how_many_times_repeat
+        fpr /= how_many_times_repeat
+        accuracy /= how_many_times_repeat
+        
+        list_tpr.append(tpr)
+        list_fpr.append(fpr)
+        list_accuracy.append(accuracy)   
+    
+    return list_tpr, list_fpr, list_accuracy
+    
+
