@@ -11,11 +11,11 @@ from defined_functions import *
 import matplotlib.pyplot as plt
 
 mu = 1
-sigma = 3
+sigma = 1
 
 list_nt = [5, 50, 100, 500, 1000, 5000, 10000, 50000]
-bin_size = 1
-bins = np.arange(0,100,bin_size)
+bin_size = 0.01
+bins = np.arange(bin_size/2,100,bin_size)
 bins = np.concatenate((-bins[::-1], bins))
 # bins = np.linspace(-100,100,int(200//bin_size))
 how_many = 100
@@ -53,6 +53,6 @@ plt.show()
 fig, ax = plt.subplots()
 ax.boxplot(list_sample_variance)
 ax.set_xticklabels(list_nt)
-plt.axhline(sigma+ bin_size**2/12,color = 'g',linestyle = '--',linewidth = 1)
+plt.axhline(sigma + bin_size**2/12,color = 'g',linestyle = '--',linewidth = 1)
 plt.title('Boxplots of sample variances about the estimated mean')
 plt.show()
