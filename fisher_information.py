@@ -35,7 +35,24 @@ def fisher_matrix(X,y,size):
     
     return I
 
+def inverse_2by2(matrix):
+    determinant = matrix[0,0] * matrix[1,1] - matrix[1,0] * matrix[0,1]
+    inverse = np.zeros_like(matrix)
+    inverse[0,0] = matrix[1,1]
+    inverse[1,1] = matrix[0,0]
+    inverse[0,1] = -matrix[0,1]
+    inverse[1,0] = -matrix[1,0]
+    inverse /= determinant
+    return inverse
 
+
+def inv_fisher_normalised(X,y,size):
+    inv_fisher = inverse_2by2(fisher_matrix(X,y,size))
+    helper = np.sqrt(inv_fisher[0,0]*inv_fisher[1,1]) 
+    inv_fisher[0,1] /= helper
+    inv_fisher[1,0] /= helper
+    return inv_fisher
+    
 
 list_bin_sizes = [0.01, 0.05,0.1,0.5, 0.75, 1, 1.5, 2, 3]
 
@@ -60,7 +77,7 @@ for iterations in range(how_many):
      X = np.random.normal(mean, variance, size)
      y = beta_0_true + beta_1_true * X + np.random.normal(0, 1, size)
     
-     I_unbinned = fisher_matrix(X, y,size)
+     I_unbinned = inv_fisher_normalised(X, y,size)
      
      element00[0][iterations] = I_unbinned[0,0]
      element10[0][iterations] = I_unbinned[1,0]
@@ -69,7 +86,7 @@ for iterations in range(how_many):
      for i in range(len(list_bin_sizes)):
          bins = list_of_bins[i] 
          X_binned = put_in_bins(X, bins)
-         I_binned = fisher_matrix(X_binned,y,size)
+         I_binned = inv_fisher_normalised(X_binned,y,size)
          
          element00[i+1][iterations] = I_binned[0,0]
          element10[i+1][iterations] = I_binned[1,0]
