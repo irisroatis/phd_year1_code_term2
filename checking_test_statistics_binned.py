@@ -42,7 +42,7 @@ ax.set_xticklabels(list_nt)
 plt.axhline(0,color = 'g',linestyle = '--',linewidth = 1, label = '0')
 plt.xlabel('size of sample')
 plt.ylabel('$E[X] - E[X^{*}]$')
-plt.title('Boxplots of Difference in Mean of Unbinned Data vs Binned Data')
+plt.title('Boxplots of Difference in Mean of Unbinned Data \n vs Binned Data')
 plt.legend()
 plt.show()
 
