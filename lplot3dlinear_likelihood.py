@@ -31,7 +31,7 @@ bins = np.concatenate((-bins[::-1], bins))
 list_beta0 = np.linspace(0,1,200)
 np.savetxt("list_beta0.csv", list_beta0, delimiter=",")   
 
-list_beta1 = np.linspace(0.5,1,1000)
+list_beta1 = np.linspace(0.5,0.9,900)
 np.savetxt("list_beta1.csv", list_beta1, delimiter=",")
 
 #### FIRST METHOD, WHEN I ASSIGN SIGMA^2 = VARIANCE STRAIGHTAWAY
@@ -87,9 +87,16 @@ fig = plt.figure()
 ax = plt.axes(projection='3d')
 ax.contour3D(xaxis, yaxis, matrix_log_lik2, 1000, cmap = 'Blues')
 ax.contour3D(xaxis, yaxis, matrix_log_lik_binned2, 1000, cmap = 'Reds')
-ax.set_xlabel('x')
-ax.set_ylabel('y')
-ax.set_zlabel('z');
+ax.set_xlabel('$\\beta_1$')
+ax.set_ylabel('$\\beta_0$')
+ax.set_zlabel('$l(\\beta_0, \\beta_1, \\sigma^2)$');
+ax.zaxis.labelpad=10
+ax.azim = -60
+ax.dist = 10
+ax.elev = 20
+plt.title('Plot of Log-likelihood Surface of Linear Regression Model')
+proxy = [plt.Rectangle((1, 1), 2, 2, fc=pc) for pc in ['blue','red']]
+plt.legend(proxy, ["unbinned", "binned"])
 plt.show()
 
 indeces_max_bounded = np.where(matrix_log_lik_binned2== matrix_log_lik_binned2.max() )
@@ -101,3 +108,16 @@ beta1hat_binned = list_beta1[indeces_max_bounded[1][0]]
 
 corrected_gradient = correction * beta1hat_binned
 
+xaxis, yaxis = np.meshgrid(list_beta1, list_beta0)
+fig = plt.figure()
+ax = plt.axes(projection='3d')
+ax.contour3D(xaxis, yaxis, matrix_log_lik2 -matrix_log_lik_binned2 , 1000, cmap = 'Blues')
+ax.set_xlabel('$\\beta_1$')
+ax.set_ylabel('$\\beta_0$')
+ax.set_zlabel('$l_u - l_b$');
+ax.zaxis.labelpad=10
+ax.azim = -60
+ax.dist = 10
+ax.elev = 20
+plt.title('Plot of Difference in Log-likelihood Surfaces using \n Unbinned vs Binned Data')
+plt.show()
