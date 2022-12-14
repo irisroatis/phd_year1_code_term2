@@ -46,13 +46,6 @@ plt.title('Boxplots of Difference in Mean of Unbinned Data vs Binned Data')
 plt.legend()
 plt.show()
 
-# fig, ax = plt.subplots()
-# ax.boxplot(list_difference)
-# ax.set_xticklabels(list_nt)
-# plt.axhline(0,color = 'g',linestyle = '--',linewidth = 1)
-# plt.title('Boxplots of bias of mean')
-# plt.show()
-
 fig, ax = plt.subplots()
 ax.boxplot(list_sample_variance)
 ax.set_xticklabels(list_nt)
