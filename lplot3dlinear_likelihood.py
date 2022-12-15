@@ -94,7 +94,7 @@ ax.zaxis.labelpad=10
 ax.azim = -60
 ax.dist = 10
 ax.elev = 20
-plt.title('Plot of Log-likelihood Surface of Linear Regression Model')
+plt.title('Plot of Log-likelihood Surfaces of Linear Regression Model \n using Unbinned and Binned data')
 proxy = [plt.Rectangle((1, 1), 2, 2, fc=pc) for pc in ['blue','red']]
 plt.legend(proxy, ["unbinned", "binned"])
 plt.show()
