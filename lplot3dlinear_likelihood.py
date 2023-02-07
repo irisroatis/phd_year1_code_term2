@@ -31,7 +31,7 @@ bins = np.concatenate((-bins[::-1], bins))
 list_beta0 = np.linspace(0,1,200)
 np.savetxt("list_beta0.csv", list_beta0, delimiter=",")   
 
-list_beta1 = np.linspace(0.5,0.9,900)
+list_beta1 = np.linspace(0.5,0.9,800)
 np.savetxt("list_beta1.csv", list_beta1, delimiter=",")
 
 #### FIRST METHOD, WHEN I ASSIGN SIGMA^2 = VARIANCE STRAIGHTAWAY
@@ -66,9 +66,13 @@ number_iterations = 1
 for iterations in range(number_iterations):
     X = np.random.normal(mean, variance, size)
     y = beta_0_true + beta_1_true * X + np.random.normal(0, 1, size)
+    to_find_beta = np.vstack((np.ones(size),X)).T
+    print(np.linalg.inv(to_find_beta.T @ to_find_beta) @ to_find_beta.T @ y)
     new_X = put_in_bins(X, bins) 
-    correction = (1 - 1/12 * 1/ np.var(new_X) **2 ) ** (-1)
-    print('correction is',correction)
+    to_find_beta = np.vstack((np.ones(size),new_X)).T
+    print(np.linalg.inv(to_find_beta.T @ to_find_beta) @ to_find_beta.T @ y)
+
+  
     for index1 in range(len(list_beta0)):
         for index2 in range(len(list_beta1)):
             sigmasq = 1 / size * sum( (y - list_beta0[index1] - X * list_beta1[index2] )**2)
@@ -106,7 +110,7 @@ beta0hat_binned = list_beta0[indeces_max_bounded[0][0]]
 beta1hat = list_beta1[indeces_max[1][0]]
 beta1hat_binned = list_beta1[indeces_max_bounded[1][0]]
 
-corrected_gradient = correction * beta1hat_binned
+
 
 xaxis, yaxis = np.meshgrid(list_beta1, list_beta0)
 fig = plt.figure()

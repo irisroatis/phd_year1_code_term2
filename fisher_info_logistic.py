@@ -97,34 +97,37 @@ for iterations in range(how_many):
          element10[i+1][iterations] = I_binned[1,0]
          element11[i+1][iterations] = I_binned[1,1]
 
-dictionary_element00 = {}
-dictionary_element10 = {}
-dictionary_element11 = {}
+dictionary_element00 = {'none':element00[0]}
+dictionary_element10 = {'none':element10[0]}
+dictionary_element11 = {'none':element11[0]}
 for i in range(len(list_bin_sizes)):
-    dictionary_element00[str(list_bin_sizes[i])] = element00[i+1] - element00[0]
-    dictionary_element10[str(list_bin_sizes[i])] = element10[i+1] - element10[0]
-    dictionary_element11[str(list_bin_sizes[i])] = element11[i+1] - element11[0]
+    dictionary_element00[str(list_bin_sizes[i])] = element00[i+1] 
+    dictionary_element10[str(list_bin_sizes[i])] = element10[i+1] 
+    dictionary_element11[str(list_bin_sizes[i])] = element11[i+1]
     
     
 # Pandas dataframe
 data0 = pd.DataFrame(dictionary_element00)
 # Plot the dataframe
-ax = data0[['0.01','0.05','0.1','0.5', '0.75', '1', '1.5', '2']].plot(kind='box', title='boxplot')
+ax = data0[['none','0.01','0.05','0.1','0.5', '0.75', '1', '1.5', '2']].plot(kind='box', title='boxplot')
 # Display the plot
+plt.title('$C_{11}$ logistic')
 plt.show()
 
 # Pandas dataframe
 data0 = pd.DataFrame(dictionary_element10)
 # Plot the dataframe
-ax = data0[['0.01','0.05','0.1','0.5', '0.75', '1', '1.5', '2']].plot(kind='box', title='boxplot')
+ax = data0[['none','0.01','0.05','0.1','0.5', '0.75', '1', '1.5', '2']].plot(kind='box', title='boxplot')
 # Display the plot
+plt.title('$C_{12}$ logistic')
+
 plt.show()
     
 # Pandas dataframe
 data0 = pd.DataFrame(dictionary_element11)
 # Plot the dataframe
-ax = data0[['0.01','0.05','0.1','0.5', '0.75', '1', '1.5', '2']].plot(kind='box', title='boxplot')
+ax = data0[['none','0.01','0.05','0.1','0.5', '0.75', '1', '1.5', '2']].plot(kind='box', title='boxplot')
 # Display the plot
-plt.show()
-    
+plt.title('$C_{22}$ logistic')
 
+plt.show()

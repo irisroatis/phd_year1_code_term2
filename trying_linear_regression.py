@@ -28,6 +28,9 @@ how_many = 1000
 list_error_beta0 = [np.zeros((how_many,))]
 list_error_beta1 = [np.zeros((how_many,))]
 corrected_grad = [np.zeros((how_many,))]
+
+corrected_grad_errorvar = [np.zeros((how_many,))]
+
 residual_variance = [np.zeros((how_many,))]
 residual_variance_corrected = [np.zeros((how_many,))]
 
@@ -36,17 +39,21 @@ for i in range(len(list_bin_sizes)):
     list_error_beta0.append(np.zeros((how_many,)))
     list_error_beta1.append(np.zeros((how_many,)))
     corrected_grad.append(np.zeros((how_many,)))
+    corrected_grad_errorvar.append(np.zeros((how_many,)))
     residual_variance.append(np.zeros((how_many,)))
     residual_variance_corrected.append(np.zeros((how_many,)))
     bin_size = list_bin_sizes[i]
     bins = np.arange(bin_size/2,how_many,bin_size)
     bins = np.concatenate((-bins[::-1], bins))
     list_of_bins.append(bins)
-    
+
+
 
 for iteration in range(how_many):
     X = np.random.normal(5, 5, size)
     y = beta_0_true + beta_1_true * X + np.random.normal(0, 1, size)
+    
+    variance_X = np.var(X)
     
     regressor = LinearRegression()  
     regressor.fit(X.reshape(-1,1), y) #training the algorithm
@@ -57,6 +64,7 @@ for iteration in range(how_many):
     for i in range(len(list_bin_sizes)):
         bins = list_of_bins[i] 
         new_X = put_in_bins(X, bins)
+        error_epsilon = np.var(new_X - X)
         variance_sample = np.var(new_X)
         regressor = LinearRegression()  
         regressor.fit(new_X.reshape(-1,1), y) #training the algorithm
@@ -64,6 +72,7 @@ for iteration in range(how_many):
         list_error_beta1[i+1][iteration] = regressor.coef_[0] 
         correct =  regressor.coef_[0] / (1 - list_bin_sizes[i]**2 / (12 * variance_sample))
         corrected_grad[i+1][iteration] = correct 
+        corrected_grad_errorvar[i+1][iteration] =  regressor.coef_[0] / (1 + error_epsilon/variance_X)
         residual_variance[i+1][iteration] = sum((y - regressor.intercept_ - regressor.coef_[0]*new_X)**2) / (size-2)
         residual_variance_corrected[i+1][iteration] = sum((y - regressor.intercept_ - correct * new_X)**2) / (size-2)
 
@@ -71,12 +80,14 @@ for iteration in range(how_many):
 dictionary_beta0 = {'no \n binning':list_error_beta0[0]}
 dictionary_beta1 = {'no \n binning':list_error_beta1[0]}
 dictionary_corrected_grad = {}
+dictionary_corrected_grad_error = {}
 dictionary_res = {'no \n binning':residual_variance[0]}
 dictionary_res_corrected = {'no \n binning':residual_variance_corrected[0]}
 for i in range(len(list_bin_sizes)):
     dictionary_beta0[str(list_bin_sizes[i])] = list_error_beta0[i+1]
     dictionary_beta1[str(list_bin_sizes[i])] = list_error_beta1[i+1]
     dictionary_corrected_grad[str(list_bin_sizes[i])] = corrected_grad[i+1]
+    dictionary_corrected_grad_error[str(list_bin_sizes[i])] = corrected_grad_errorvar[i+1]
     dictionary_res[str(list_bin_sizes[i])] = residual_variance[i+1]
     dictionary_res_corrected[str(list_bin_sizes[i])] = residual_variance_corrected[i+1]
 
@@ -113,7 +124,18 @@ plt.title('Corrected Estimated Gradient in Linear Regression')
 plt.legend()
 plt.show()
 
-
+# Pandas dataframe
+data2 = pd.DataFrame(dictionary_corrected_grad_error)
+# Plot the dataframe
+ax = data2[['0.01','0.05','0.1','0.5', '0.75', '1', '1.5', '2.25', '2.75', '3.3','3.6', '4']].plot(kind='box', title='boxplot')
+plt.axhline(beta_1_true,color = 'r',linestyle = '--',linewidth = 1, label = 'true $\\beta_1$')
+plt.xlabel('bin size, $h$')
+plt.ylabel('$\\hat{\\beta}^{*} - \\beta$')
+plt.xlabel('bin size, $h$')
+plt.ylabel('corrected $\\hat{\\beta_1^{*}}$')
+plt.title('Corrected Gradient Error-in-Variables in Linear Regression')
+plt.legend()
+plt.show()
 
 ##### plots residual variance 
 
