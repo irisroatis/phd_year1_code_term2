@@ -21,7 +21,7 @@ beta_0_true = 0.4
 beta_1_true = 0.6
 
 size = 100
-list_bin_sizes = [0.01,0.05,0.1,0.5, 0.75, 1, 1.5, 2.25, 2.75, 3.3, 3.6, 4]
+list_bin_sizes = [0.01,0.05,0.1,0.25, 0.35, 0.5, 0.65, 0.75, 0.9, 1, 1.25, 1.5, 2]
 
 how_many = 1000
 
@@ -103,7 +103,7 @@ for i in range(len(list_bin_sizes)):
 # Pandas dataframe
 data1 = pd.DataFrame(dictionary_beta1)
 # Plot the dataframe
-ax = data1[['no \n binning','0.01','0.05','0.1','0.5', '0.75', '1', '1.5', '2.25', '2.75', '3.3','3.6', '4']].plot(kind='box', title='boxplot')
+ax = data1[['no \n binning','0.01','0.05','0.1','0.25', '0.35', '0.5', '0.65', '0.75', '0.9', '1', '1.25', '1.5','2']].plot(kind='box', title='boxplot')
 plt.axhline(beta_1_true,color = 'r',linestyle = '--',linewidth = 1, label = 'true $\\beta_1$')
 plt.xlabel('bin size, $h$')
 plt.ylabel('$\\hat{\\beta_1^{*}}$')
@@ -114,7 +114,7 @@ plt.show()
 # Pandas dataframe
 data2 = pd.DataFrame(dictionary_corrected_grad)
 # Plot the dataframe
-ax = data2[['0.01','0.05','0.1','0.5', '0.75', '1', '1.5', '2.25', '2.75', '3.3','3.6', '4']].plot(kind='box', title='boxplot')
+ax = data2[['0.01','0.05','0.1','0.25', '0.35', '0.5', '0.65', '0.75', '0.9', '1', '1.25', '1.5','2']].plot(kind='box', title='boxplot')
 plt.axhline(beta_1_true,color = 'r',linestyle = '--',linewidth = 1, label = 'true $\\beta_1$')
 plt.xlabel('bin size, $h$')
 plt.ylabel('$\\hat{\\beta}^{*} - \\beta$')
@@ -125,9 +125,9 @@ plt.legend()
 plt.show()
 
 # Pandas dataframe
-data2 = pd.DataFrame(dictionary_corrected_grad_error)
+data3 = pd.DataFrame(dictionary_corrected_grad_error)
 # Plot the dataframe
-ax = data2[['0.01','0.05','0.1','0.5', '0.75', '1', '1.5', '2.25', '2.75', '3.3','3.6', '4']].plot(kind='box', title='boxplot')
+ax = data3[['no \n binning','0.01','0.05','0.1','0.25', '0.35', '0.5', '0.65', '0.75', '0.9', '1', '1.25', '1.5','2']].plot(kind='box', title='boxplot')
 plt.axhline(beta_1_true,color = 'r',linestyle = '--',linewidth = 1, label = 'true $\\beta_1$')
 plt.xlabel('bin size, $h$')
 plt.ylabel('$\\hat{\\beta}^{*} - \\beta$')

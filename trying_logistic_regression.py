@@ -94,7 +94,7 @@ size = 1000
 
 # list_bin_sizes = [0.05,0.1,0.5, 1, 1.5, 2.75, 3.3, 3.6, 4]
 
-list_bin_sizes = [0.01,0.05,0.1,0.5, 0.75, 1, 1.5, 2.25, 2.75, 3]
+list_bin_sizes = [0.01,0.05,0.1,0.25, 0.35, 0.5, 0.65, 0.75, 0.9, 1, 1.25, 1.5, 2]
 
 how_many = 100
 
@@ -179,7 +179,8 @@ for i in range(len(list_bin_sizes)):
 # Pandas dataframe
 data1 = pd.DataFrame(dictionary_beta1)
 # Plot the dataframe
-ax = data1[['no \n binning','0.01','0.05','0.1','0.5', '0.75', '1', '1.5', '2.25', '2.75', '3']].plot(kind='box', title='boxplot')
+
+ax = data1[['no \n binning','0.01','0.05','0.1','0.25', '0.35', '0.5', '0.65', '0.75', '0.9', '1', '1.25', '1.5','2']].plot(kind='box', title='boxplot')
 plt.xlabel('bin size, $h$')
 plt.ylabel('$\\hat{\\beta_1^{*}}$')
 plt.title('Estimated Gradient in Logistic Regression')
@@ -188,7 +189,7 @@ plt.show()
 # Pandas dataframe
 data2 = pd.DataFrame(dictionary_beta0)
 # Plot the dataframe
-ax = data2[['0.01','0.05','0.1','0.5', '0.75', '1', '1.5', '2.25', '2.75', '3']].plot(kind='box', title='boxplot')
+ax = data2[['no \n binning','0.01','0.05','0.1','0.25', '0.35', '0.5', '0.65', '0.75', '0.9', '1', '1.25', '1.5','2']].plot(kind='box', title='boxplot')
 plt.xlabel('bin size, $h$')
 plt.ylabel('$\\hat{\\beta}^{*} - \\beta$')
 plt.xlabel('bin size, $h$')
@@ -199,7 +200,7 @@ plt.show()
 # Pandas dataframe
 data3 = pd.DataFrame(dict_accuracy)
 # Plot the dataframe
-ax = data3[['no \n binning','0.01','0.05','0.1','0.5', '0.75', '1', '1.5', '2.25', '2.75', '3']].plot(kind='box', title='boxplot')
+ax = data3[['no \n binning','0.01','0.05','0.1','0.25', '0.35', '0.5', '0.65', '0.75', '0.9', '1', '1.25', '1.5','2']].plot(kind='box', title='boxplot')
 plt.xlabel('bin size, $h$')
 plt.ylabel('accuracy')
 plt.title('Accuracy Logistic Regression')
@@ -208,7 +209,7 @@ plt.show()
 # Pandas dataframe
 data4 = pd.DataFrame(dict_accuracy_shepp)
 # Plot the dataframe
-ax = data4[['no \n binning','0.01','0.05','0.1','0.5', '0.75', '1', '1.5', '2.25', '2.75', '3']].plot(kind='box', title='boxplot')
+ax = data4[['no \n binning','0.01','0.05','0.1','0.25', '0.35', '0.5', '0.65', '0.75', '0.9', '1', '1.25', '1.5','2']].plot(kind='box', title='boxplot')
 plt.xlabel('bin size, $h$')
 plt.ylabel('accuracy')
 plt.title('Accuracy Logistic Regression where $\\hat{\\beta_1^{*}}$ was Shppard Corrected')

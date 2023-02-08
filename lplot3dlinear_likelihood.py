@@ -66,11 +66,11 @@ number_iterations = 1
 for iterations in range(number_iterations):
     X = np.random.normal(mean, variance, size)
     y = beta_0_true + beta_1_true * X + np.random.normal(0, 1, size)
-    to_find_beta = np.vstack((np.ones(size),X)).T
-    print(np.linalg.inv(to_find_beta.T @ to_find_beta) @ to_find_beta.T @ y)
+    # to_find_beta = np.vstack((np.ones(size),X)).T
+    # print(np.linalg.inv(to_find_beta.T @ to_find_beta) @ to_find_beta.T @ y)
     new_X = put_in_bins(X, bins) 
-    to_find_beta = np.vstack((np.ones(size),new_X)).T
-    print(np.linalg.inv(to_find_beta.T @ to_find_beta) @ to_find_beta.T @ y)
+    # to_find_beta = np.vstack((np.ones(size),new_X)).T
+    # print(np.linalg.inv(to_find_beta.T @ to_find_beta) @ to_find_beta.T @ y)
 
   
     for index1 in range(len(list_beta0)):
