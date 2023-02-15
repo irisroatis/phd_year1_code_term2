@@ -12,31 +12,36 @@ import random
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
 import pandas as pd
+from scipy.optimize import curve_fit
 
-def logistic(x):
-    logistic =  1/(1+np.exp(-x))
-    return logistic
+def logistic_curve(X, a, b, c, d):
+    """
+    Logistic function with parameters a, b, c, d
+    a is the curve's maximum value (top asymptote)
+    b is the curve's minimum value (bottom asymptote)
+    c is the logistic growth rate or steepness of the curve
+    d is the x value of the sigmoid's midpoint
+    """
+    return (a / (1 + np.exp(-c * (X - d)))) + b
 
-def optimise(X, y, num_iterations, learning_rate = 0.005):
-    n = X.shape[0] 
-    beta = [0]
-    beta_0 = [0]
-    for i in range(num_iterations):
-        # Calculate gradients 
-        
-        y_log = logistic(X @ beta + beta_0) 
-     
-        dbeta = (1/n) * np.transpose(X) @ (y_log - y)
-        dbeta_0 = np.mean(y_log-y)
-        
-        # Updating procedure for the parameters (gradient descent)
-        beta -= learning_rate * dbeta
-        beta_0 -= learning_rate * dbeta_0 
- 
-    # Save parameters and gradients in dictionary
-    params = {"beta": beta, "beta_0": beta_0}
-    return params
+def optimise_logistic(X, y):
+    p0 = [max(y), 1, 1, 5]
+    logistic_params, _ = curve_fit(logistic_curve, X, y, p0 = p0)
+    return logistic_params
 
+def quadratic(X, a, b, c):
+    return a* X **2 + b*X + c
+
+def optimise_quadratic(X,y):
+    q_param,_ = curve_fit(quadratic, X, y)
+    return q_param
+
+def root_function(x, a, b):
+    return x**(1/a) * b
+
+def optimise_root(X, y):
+    root_params, _ = curve_fit(root_function, X, y)
+    return root_params
 
 def put_in_bins(data, bins, way_to_bin):
     digitized = np.digitize(data,bins)
@@ -139,8 +144,14 @@ def ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, 
 
 def plotting_against_mse(abs_diff_ss, mse_testdata, type_transf, parameters, size_test, size_train, how_many_it):
     plt.scatter(np.mean(abs_diff_ss,axis = 1), np.mean(mse_testdata,axis = 1))
-    plt.xlabel('$E[(S(D) - S(T(D)))^2]$')
-    plt.ylabel('MSE')
+    plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
+    plt.ylabel('predictive MSE')
+    # if type_transf == 'multiplied_non_random':
+    #     log_X = np.mean(abs_diff_ss,axis = 1)
+    #     log_y = np.mean(mse_testdata,axis = 1)
+    #     a, b = optimise_root(log_X, log_y)
+    #     random_x = np.linspace(min(log_X), max(log_X), 100)
+    #     plt.plot(random_x, root_function(random_x, a, b))
     plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
               +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
               +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test))
@@ -148,23 +159,27 @@ def plotting_against_mse(abs_diff_ss, mse_testdata, type_transf, parameters, siz
     
 def plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameters, size_test, size_train, how_many_it, line_of_fit = False):
     plt.scatter([0] + list(extra), np.mean(abs_diff_ss,axis = 1))
-    plt.ylabel('$E[(S(D) - S(T(D)))^2]$')
-    plt.xlabel('bin size')
+    plt.ylabel('$E[(S(X) - S(X^{*}))^2]$')
+    if type_transf in ['binned_centre', 'binned_random']:
+        plt.xlabel('bin size, $h$')
+    elif type_transf == 'multiplied_non_random':
+        plt.xlabel('$\\epsilon$')
     
     
     if line_of_fit:
-        log_X = np.array([0] + list(extra)).reshape(-1,1)
-        log_y = np.mean(abs_diff_ss,axis = 1).reshape(-1,1)
-        
-        scaled_log_y = log_y / max(log_y)
-        
-        final_model = optimise(log_X,scaled_log_y, num_iterations = 100, learning_rate=0.001)
-        
-        random_x = np.linspace(0, max(log_X),100)
-        random_y = logistic(random_x @ final_model['beta_0'] + final_model['beta'][0,-1])
-        plt.plot(random_x, random_y *  max(log_y), 'r',label='best fit')
-        plt.legend()
-        
+        log_X = np.array([0] + list(extra)).flatten()
+        log_y = np.mean(abs_diff_ss,axis = 1).flatten()
+        if type_transf == 'binned_centre':
+            a, b, c, d = optimise_logistic(log_X, log_y)
+            random_x = np.linspace(0, max(log_X), 100)
+            plt.plot(random_x, logistic_curve(random_x, a, b, c, d),'r', label = 'c = ' +str(np.round(c,3)) + ' d = '+str(np.round(d,3)))
+            plt.legend()
+        elif type_transf == 'multiplied_non_random':
+            a, b, c = optimise_quadratic(log_X, log_y)
+            random_x = np.linspace(0, max(log_X), 100)
+            plt.plot(random_x, quadratic(random_x, a, b, c),'r', label = 'a = ' +str(np.round(a,3)) + ' b = '+str(np.round(b,3)) + ' c = '+str(np.round(c,3)))
+            plt.legend()
+            
     
     plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
               +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
@@ -173,16 +188,16 @@ def plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameters, size_
     plt.show()
 
 
-how_many_it = 200
-size_test, size_train = 800, 100
+how_many_it = 300
+size_test, size_train = 1000, 100
 parameters = [0.4, 1, 0, 1];
 # type_transf = 'multiplied_non_random'
 type_transf = 'binned_centre'
 random.seed(1)
 
 if type_transf in ['binned_centre', 'binned_random']:
-    max_bin_size = 10
-    extra = np.linspace(0.01, max_bin_size, 200)
+    max_bin_size = 15
+    extra = np.linspace(0.01, max_bin_size, 70)
 elif type_transf == 'multiplied_non_random':
     extra = np.linspace(0.01, 5, 50)
 
@@ -190,4 +205,5 @@ difference_ss, abs_diff_ss, mse_testdata = ss_against_mse(how_many_it, parameter
 plotting_against_mse(abs_diff_ss, mse_testdata, type_transf, parameters, size_test, size_train, how_many_it)
 plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameters, size_test, size_train, how_many_it, True)
 
+# plt.plot(np.array([0] + list(extra)).flatten(), np.mean(mse_testdata,axis = 1))
 #### fitting logistic regression for bin size against E(sq difference)

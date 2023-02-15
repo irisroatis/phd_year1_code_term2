@@ -18,12 +18,6 @@ import random
 
 ####### FUNCTIONS NEEDED
 
-def put_in_bins(data, bins):
-    digitized = np.digitize(data,bins)
-    midpoints_bins = (bins[:len(bins)-1] + bins[1:])/2
-    new_data = midpoints_bins[digitized-1]
-    return new_data
-
 
 
 def lda_find_hyperplane(s1,s2):
@@ -87,6 +81,7 @@ def tprfpr(actual, predicted, accuracy = False):
     else:
         return tpr, fpr
 
+
 def generating_test_data(how_many_times_repeat, iterations, mu1, sigma1, mu2, 
                          sigma2, plot_classes = False):
     """
@@ -121,14 +116,14 @@ def generating_test_data(how_many_times_repeat, iterations, mu1, sigma1, mu2,
         
         for itera in range(iterations):
 
-            which_normal = random.randint(1,2)
+            which_normal = random.randint(0,1)
             if dim == 1:
-                if which_normal == 1:
+                if which_normal == 0:
                     random_simulation[itera,] = np.random.normal(mu1, sigma1)
                 else:
                     random_simulation[itera,] = np.random.normal(mu2, sigma2)
             else:
-                if which_normal == 1:
+                if which_normal == 0:
                     random_simulation[itera,] = np.random.multivariate_normal(mu1, sigma1)
                 else:
                     random_simulation[itera,] = np.random.multivariate_normal(mu2, sigma2)
@@ -136,16 +131,17 @@ def generating_test_data(how_many_times_repeat, iterations, mu1, sigma1, mu2,
         
         testing_data.append(random_simulation)
         belonging_classes.append(which_class_list)
-        
-        if plot_classes:
-            trying_sth = testing_data[repeat]
-            plt.hist(trying_sth[belonging_classes[repeat] == 1], alpha=0.5, label='N('+str(mu1[0])+','+str(sigma1[0])+')')
-            plt.hist(trying_sth[belonging_classes[repeat] == 2], alpha=0.5, label='N('+str(mu2[0])+','+str(sigma2[0])+')')
-            plt.legend(loc='upper right')
-            plt.title('testing data')
-            plt.show()
+      
     
     return testing_data, belonging_classes
+
+
+def put_in_bins(data, bins):
+    digitized = np.digitize(data,bins)
+    midpoints_bins = (bins[:len(bins)-1] + bins[1:])/2
+    new_data = midpoints_bins[digitized-1]
+    return new_data
+
     
 
 ####### FUNCTIONS FOR kNN

@@ -5,7 +5,6 @@ Created on Thu Jan  5 14:02:44 2023
 
 @author: roatisiris
 """
-
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
@@ -214,6 +213,3 @@ plt.xlabel('bin size, $h$')
 plt.ylabel('accuracy')
 plt.title('Accuracy Logistic Regression where $\\hat{\\beta_1^{*}}$ was Shppard Corrected')
 plt.show()
-
-      
-            
