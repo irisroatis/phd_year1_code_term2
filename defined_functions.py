@@ -19,7 +19,24 @@ import random
 ####### FUNCTIONS NEEDED
 
 
-
+def maha_distance(x1,x2):
+    mu1 = np.mean(x1)
+    mu2 = np.mean(x2)
+    v1 = np.var(x1, ddof = 1)
+    v2 = np.var(x2, ddof = 1)
+    return np.sqrt((mu1 - mu2) ** 2 / (v1 + v2))
+    
+    
+def bhatt_distance(x1,x2):
+    mu1 = np.mean(x1)
+    mu2 = np.mean(x2)
+    v1 = np.var(x1, ddof = 1)
+    v2 = np.var(x2, ddof = 1)
+    sumsqvar = v1 + v2
+    return 1/4 * (mu1 - mu2)**2 / sumsqvar + 1/2 * np.log(abs(sumsqvar/2) / (np.sqrt(v1) * np.sqrt(v2)))
+        
+    
+    
 def lda_find_hyperplane(s1,s2):
     
     size1 = len(s1)
