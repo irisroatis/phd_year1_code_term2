@@ -25,7 +25,6 @@ how_many = 100
 accuracy = [np.zeros((how_many,))]
 accuracy_on_binned = [np.zeros((how_many,))]
 store_maha_dist = []
-store_bhatt_dist = []
 
 
 mu1, sigma1 = [0.5], [1] # mean and standard deviation
@@ -45,7 +44,6 @@ for i in range(len(list_bin_sizes)):
     accuracy.append(np.zeros((how_many,)))
     accuracy_on_binned.append(np.zeros((how_many,)))
     store_maha_dist.append(np.zeros((how_many,)))
-    store_bhatt_dist.append(np.zeros((how_many,)))
 
     bin_size = list_bin_sizes[i]
     bins = np.arange(bin_size/2,1000,bin_size)
@@ -83,7 +81,6 @@ for iteration in range(how_many):
         my_prediction_binned = model.predict(binned_test_data)
         
         store_maha_dist[i][iteration] = maha_distance(x, new_X)
-        store_bhatt_dist[i][iteration] = bhatt_distance(x, new_X)
         
         accuracy[i+1][iteration] = 1 - sum(np.absolute(my_prediction - belonging_classes)) / len(belonging_classes)
         accuracy_on_binned[i+1][iteration] = 1 - sum(np.absolute(my_prediction_binned - belonging_classes)) / len(belonging_classes)
@@ -93,9 +90,7 @@ dict_accuracy_b = {'no \n binning':accuracy_on_binned[0]}
 dict_accuracy_mean = [np.mean(accuracy[0])]
 dict_accuracy_b_mean = [np.mean(accuracy_on_binned[0])]
 dict_maha_dist = {}
-dict_bhatt_dist = {}
 dict_maha_dist_mean = []
-dict_bhatt_dist_mean = []
 
 
 for i in range(len(list_bin_sizes)):
@@ -104,10 +99,9 @@ for i in range(len(list_bin_sizes)):
     dict_accuracy_b[str(list_bin_sizes[i])] = accuracy_on_binned[i+1]
     dict_accuracy_mean.append(np.mean(accuracy[i+1]))
     dict_accuracy_b_mean.append(np.mean(accuracy_on_binned[i+1]))
-    dict_maha_dist[str(list_bin_sizes[i])] = store_maha_dist[i]
-    dict_bhatt_dist[str(list_bin_sizes[i])] = store_bhatt_dist[i]
+    dict_maha_dist[str(list_bin_sizes[i])] = store_maha_dist[i] 
     dict_maha_dist_mean.append(np.mean(store_maha_dist[i]))
-    dict_bhatt_dist_mean.append(np.mean(store_bhatt_dist[i]))
+
  
 
 # # Pandas dataframe
@@ -150,12 +144,6 @@ plt.xlabel('bin size, $h$')
 plt.ylabel('$E[D_{ma}(p,q)]$')
 plt.show()
 
-plt.scatter(list(list_bin_sizes), dict_bhatt_dist_mean)
-plt.title('Bhattacharya Distance')
-plt.xlabel('bin size, $h$')
-plt.ylabel('$E[D_{bh}(p,q)]$')
-plt.show()
-
 # plt.scatter([0] + list(list_bin_sizes), dict_accuracy_mean)
 # plt.title('Non-binned Test Data')
 # plt.xlabel('bin size, $h$')
@@ -168,11 +156,6 @@ plt.show()
 # plt.ylabel('$E[$Accuracy$]$')
 # plt.show()
 
-plt.scatter([0] + dict_bhatt_dist_mean, dict_accuracy_b_mean)
-plt.title('Binned Test Data, Bhattacharya')
-plt.ylabel('$E[$Accuracy$]$')
-plt.xlabel('E[D_{bh}(p,q)]')
-plt.show()
 
 plt.scatter([0] + dict_maha_dist_mean, dict_accuracy_b_mean)
 plt.title('Binned Test Data, Mahalanobis')

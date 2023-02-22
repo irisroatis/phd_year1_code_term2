@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jan 25 13:45:13 2023
+Created on Wed Feb 22 12:53:42 2023
 
-@author: roatisiris
+@author: ir318
 """
+
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,34 +14,6 @@ from sklearn.linear_model import LinearRegression, LogisticRegression, Ridge
 import pandas as pd
 from scipy.optimize import curve_fit
 
-def logistic_curve(X, a, b, c, d):
-    """
-    Logistic function with parameters a, b, c, d
-    a is the curve's maximum value (top asymptote)
-    b is the curve's minimum value (bottom asymptote)
-    c is the logistic growth rate or steepness of the curve
-    d is the x value of the sigmoid's midpoint
-    """
-    return (a / (1 + np.exp(-c * (X - d)))) + b
-
-def optimise_logistic(X, y):
-    p0 = [max(y), 1, 1, 5]
-    logistic_params, _ = curve_fit(logistic_curve, X, y, p0 = p0)
-    return logistic_params
-
-def quadratic(X, a, b, c):
-    return a* X **2 + b*X + c
-
-def optimise_quadratic(X,y):
-    q_param,_ = curve_fit(quadratic, X, y)
-    return q_param
-
-def root_function(x, a, b):
-    return x**(1/a) * b
-
-def optimise_root(X, y):
-    root_params, _ = curve_fit(root_function, X, y)
-    return root_params
 
 def put_in_bins(data, bins, way_to_bin):
     digitized = np.digitize(data,bins)
