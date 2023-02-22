@@ -30,9 +30,21 @@ def put_in_bins(data, bins, way_to_bin):
 def calc_ss(x,y):
     return x.T @ y
 
-def generate_test(e, std, size, beta_0, beta_1):
-    X = np.random.normal(e, std, size)
-    y = beta_0 + beta_1 * X + np.random.normal(0, 1, size)
+def generate_test_multivariate(e, std, size, beta):
+    '''
+    Making e, std vectors such that X1 (first column of X) is generated
+    using N(e1,std1) and so on.
+    
+    beta is the vector of all parameters (including intercept)
+
+    '''
+    what_dimension = len(e)
+    X = np.zeros((size, what_dimension+1))
+    X[:,0] = 1
+    for i in range(what_dimension):
+        X[:,i+1] = np.random.normal(e[i], std[i], size)
+    y = X @ beta + np.random.normal(0, 1, size)
+    X = X[:,1:]
     return X, y
 
 def mse(y_predicted, actual_y):
@@ -54,11 +66,10 @@ def data_transf(X, type_transf, bins = None, constant = None):
     elif type_transf == 'multiplied_non_random':
         return (1 + constant) * X
     
-def ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra=None, ridge= False, alpha = None):
-    beta_0_true = parameters[0]
-    beta_1_true = parameters[1]
-    e = parameters[2]
-    std = parameters[3]
+def multivariate_ss_against_mse(how_many_it, parameter_dictionary, size_test, size_train, type_transf, extra=None):
+    beta = parameter_dictionary['beta']
+    e =  parameter_dictionary['mean']
+    std =  parameter_dictionary['std_dev']
 
     how_many_extras = len(extra) + 1
 
@@ -68,31 +79,27 @@ def ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, 
     mse_testdata =  np.zeros((how_many_extras, how_many_it))
      
     # generating test data the same for all binnings and iterations
-    X_test, y_test = generate_test(e, std, size_test, beta_0_true, beta_1_true)
+    X_test, y_test = generate_test_multivariate(e, std, size_test, beta)
 
     
     for iteration in range(how_many_it):
         
         print((iteration+1)/how_many_it)    # code progress
         
-        X,y = generate_test(e, std, size_train, beta_0_true, beta_1_true)
+        X,y = generate_test_multivariate(e, std, size_train, beta)
     
-        if ridge:
-            regressor = Ridge(alpha = alpha)  
-           
-        else:
-            regressor = LinearRegression()  
-            
-            
-            
-        regressor.fit(X.reshape(-1,1), y) #training the algorithm
-        y_predicted_unbinned = regressor.predict(X_test.reshape(-1,1))
+        regressor = LinearRegression()  
+  
+        regressor.fit(X, y) #training the algorithm
+        y_predicted_unbinned = regressor.predict(X_test)
             
         mse_unbinned = mse(y_predicted_unbinned, y_test)
         
-        ss_unbinned = calc_ss(X, y)
+        ss_unbinned = np.zeros((X.shape[1],1))
+        for index in range(X.shape[1]):
+            ss_unbinned[index] =   calc_ss(X[:,index], y)
         
-        diff = ss_unbinned - ss_unbinned
+        diff = np.linalg.norm(ss_unbinned-ss_unbinned)
         difference_ss[0, iteration],  abs_diff_ss[0,iteration] = diff, diff**2
         mse_testdata[0, iteration] = mse_unbinned
         
@@ -108,11 +115,8 @@ def ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, 
             elif type_transf == 'multiplied_non_random':
                 new_X = data_transf(X, type_transf, constant = extra[i])
             
-            if ridge:
-                regressor = Ridge(alpha = alpha)  
-               
-            else:
-                regressor = LinearRegression() 
+            
+            regressor = LinearRegression() 
             
             regressor.fit(new_X.reshape(-1,1), y) #training the algorithm
             y_predicted_binned = regressor.predict(X_test.reshape(-1,1))
@@ -133,40 +137,19 @@ def plotting_against_mse(abs_diff_ss, mse_testdata, type_transf, parameters, siz
     plt.scatter(np.mean(abs_diff_ss,axis = 1), np.mean(mse_testdata,axis = 1))
     plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
     plt.ylabel('predictive MSE')
-    # if type_transf == 'multiplied_non_random':
-    #     log_X = np.mean(abs_diff_ss,axis = 1)
-    #     log_y = np.mean(mse_testdata,axis = 1)
-    #     a, b = optimise_root(log_X, log_y)
-    #     random_x = np.linspace(min(log_X), max(log_X), 100)
-    #     plt.plot(random_x, root_function(random_x, a, b))
     plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
               +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
               +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test))
     plt.show()
     
-def plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameters, size_test, size_train, how_many_it, line_of_fit = False):
+def plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameters, size_test, size_train, how_many_it):
     plt.scatter([0] + list(extra), np.mean(abs_diff_ss,axis = 1))
     plt.ylabel('$E[(S(X) - S(X^{*}))^2]$')
     if type_transf in ['binned_centre', 'binned_random']:
         plt.xlabel('bin size, $h$')
     elif type_transf == 'multiplied_non_random':
         plt.xlabel('$\\epsilon$')
-    
-    
-    if line_of_fit:
-        log_X = np.array([0] + list(extra)).flatten()
-        log_y = np.mean(abs_diff_ss,axis = 1).flatten()
-        if type_transf == 'binned_centre':
-            a, b, c, d = optimise_logistic(log_X, log_y)
-            random_x = np.linspace(0, max(log_X), 100)
-            plt.plot(random_x, logistic_curve(random_x, a, b, c, d),'r', label = 'c = ' +str(np.round(c,3)) + ' d = '+str(np.round(d,3)))
-            plt.legend()
-        elif type_transf == 'multiplied_non_random':
-            a, b, c = optimise_quadratic(log_X, log_y)
-            random_x = np.linspace(0, max(log_X), 100)
-            plt.plot(random_x, quadratic(random_x, a, b, c),'r', label = 'a = ' +str(np.round(a,3)) + ' b = '+str(np.round(b,3)) + ' c = '+str(np.round(c,3)))
-            plt.legend()
-            
+
     
     plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
               +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
@@ -177,7 +160,10 @@ def plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameters, size_
 
 how_many_it = 300
 size_test, size_train = 1000, 100
-parameters = [0.4, 1, 0, 1];
+parameters_dictionary = {};
+parameters_dictionary["beta"] = [0.4, 1, 0.2];
+parameters_dictionary["mean"] = [0, 1];
+parameters_dictionary["std_dev"] = [1, 5];
 # type_transf = 'multiplied_non_random'
 type_transf = 'binned_centre'
 random.seed(1)
@@ -190,23 +176,11 @@ elif type_transf == 'multiplied_non_random':
 
 
 
-#### Allows for the comparison against ridge regression for various penalties 
-list_of_alphas = [0.01, 0.1, 0.5, 2, 5, 10]
 
-difference_ss, abs_diff_ss, mse_testdata = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, False)
-plt.figure()
-plt.plot(np.mean(abs_diff_ss,axis = 1), np.mean(mse_testdata,axis = 1),'.', label='No L2')
-
-for alpha in list_of_alphas:
-    difference_ss, abs_diff_ss, mse_testdata = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, True,alpha)
-    plt.plot(np.mean(abs_diff_ss,axis = 1), np.mean(mse_testdata,axis = 1),'.', label='$\\alpha = $'+str(alpha))
-    
-plt.legend()
-plt.show()   
-    
+difference_ss, abs_diff_ss, mse_testdata = multivariate_ss_against_mse(how_many_it, parameters_dictionary, size_test, size_train, type_transf, extra)
     
 # plotting_against_mse(abs_diff_ss, mse_testdata, type_transf, parameters, size_test, size_train, how_many_it)
-plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameters, size_test, size_train, how_many_it, True)
+# plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameters, size_test, size_train, how_many_it, True)
 
 # plt.plot(np.array([0] + list(extra)).flatten(), np.mean(mse_testdata,axis = 1))
 #### fitting logistic regression for bin size against E(sq difference)
