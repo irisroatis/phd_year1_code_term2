@@ -7,6 +7,10 @@ Created on Wed Feb 22 12:53:42 2023
 """
 
 
+
+##### THIS CODE ALLOWS FOR BOTH UNIVARIATE & MULTIVARIATE CASE
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 import random
@@ -118,31 +122,43 @@ def multivariate_ss_against_mse(how_many_it, parameter_dictionary, size_test, si
             
             regressor = LinearRegression() 
             
-            regressor.fit(new_X.reshape(-1,1), y) #training the algorithm
-            y_predicted_binned = regressor.predict(X_test.reshape(-1,1))
+            regressor.fit(new_X, y) #training the algorithm
+            y_predicted_binned = regressor.predict(X_test)
                 
          
             mse_binned = mse(y_predicted_binned, y_test)
         
-            ss_binned = calc_ss(new_X, y)
+            ss_binned = np.zeros((new_X.shape[1],1))
+            for index in range(X.shape[1]):
+                ss_binned[index] =   calc_ss(new_X[:,index], y)
             
-            diff = ss_unbinned - ss_binned
+            diff = np.linalg.norm(ss_unbinned-ss_binned)
             difference_ss[i+1,iteration],  abs_diff_ss[i+1,iteration] = diff, diff**2
        
             mse_testdata[i+1,iteration] = mse_binned
     
     return difference_ss, abs_diff_ss, mse_testdata
 
-def plotting_against_mse(abs_diff_ss, mse_testdata, type_transf, parameters, size_test, size_train, how_many_it):
+def plotting_against_mse(abs_diff_ss, mse_testdata, type_transf, parameter_dictionary, size_test, size_train, how_many_it):
+    beta = parameter_dictionary['beta']
+    e =  parameter_dictionary['mean']
+    std =  parameter_dictionary['std_dev']
+    
+    plt.figure()
     plt.scatter(np.mean(abs_diff_ss,axis = 1), np.mean(mse_testdata,axis = 1))
     plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
     plt.ylabel('predictive MSE')
-    plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
-              +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
+    plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta$ =' +str(beta)
+             +', $\\mu$ = ' +str(e) +' $\\sigma$ = ' +str(std) 
               +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test))
     plt.show()
     
-def plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameters, size_test, size_train, how_many_it):
+def plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameter_dictionary, size_test, size_train, how_many_it):
+    beta = parameter_dictionary['beta']
+    e =  parameter_dictionary['mean']
+    std =  parameter_dictionary['std_dev']
+    
+    plt.figure()
     plt.scatter([0] + list(extra), np.mean(abs_diff_ss,axis = 1))
     plt.ylabel('$E[(S(X) - S(X^{*}))^2]$')
     if type_transf in ['binned_centre', 'binned_random']:
@@ -150,9 +166,8 @@ def plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameters, size_
     elif type_transf == 'multiplied_non_random':
         plt.xlabel('$\\epsilon$')
 
-    
-    plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
-              +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
+    plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta$ =' +str(beta)
+             + ', $\\mu$ = ' +str(e) +' $\\sigma$ = ' +str(std) 
               +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test))
     
     plt.show()
@@ -160,13 +175,13 @@ def plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameters, size_
 
 how_many_it = 300
 size_test, size_train = 1000, 100
-parameters_dictionary = {};
-parameters_dictionary["beta"] = [0.4, 1, 0.2];
-parameters_dictionary["mean"] = [0, 1];
-parameters_dictionary["std_dev"] = [1, 5];
+parameter_dictionary = {};
+parameter_dictionary["beta"] = [0.4, 1];
+parameter_dictionary["mean"] = [0];
+parameter_dictionary["std_dev"] = [1];
 # type_transf = 'multiplied_non_random'
 type_transf = 'binned_centre'
-random.seed(1)
+
 
 if type_transf in ['binned_centre', 'binned_random']:
     max_bin_size = 15
@@ -177,10 +192,10 @@ elif type_transf == 'multiplied_non_random':
 
 
 
-difference_ss, abs_diff_ss, mse_testdata = multivariate_ss_against_mse(how_many_it, parameters_dictionary, size_test, size_train, type_transf, extra)
+difference_ss, abs_diff_ss, mse_testdata = multivariate_ss_against_mse(how_many_it, parameter_dictionary, size_test, size_train, type_transf, extra)
     
-# plotting_against_mse(abs_diff_ss, mse_testdata, type_transf, parameters, size_test, size_train, how_many_it)
-# plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameters, size_test, size_train, how_many_it, True)
+plotting_against_mse(abs_diff_ss, mse_testdata, type_transf, parameter_dictionary, size_test, size_train, how_many_it)
+plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameter_dictionary, size_test, size_train, how_many_it)
 
 # plt.plot(np.array([0] + list(extra)).flatten(), np.mean(mse_testdata,axis = 1))
 #### fitting logistic regression for bin size against E(sq difference)
