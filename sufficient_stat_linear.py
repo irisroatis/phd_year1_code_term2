@@ -89,11 +89,14 @@ def ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, 
 
     how_many_extras = len(extra) + 1
 
+    abs_diff_ss_dictionary = {'none':np.zeros((how_many_extras, how_many_it))}
+    mse_testdata_dictionary = {'none':np.zeros((how_many_extras, how_many_it))}
+    
+    
+    for i in range(len(alpha)):
+        abs_diff_ss_dictionary[str(alpha[i])] =  np.zeros((how_many_extras, how_many_it))
+        mse_testdata_dictionary[str(alpha[i])]  =  np.zeros((how_many_extras, how_many_it))
 
-    difference_ss = np.zeros((how_many_extras, how_many_it))
-    abs_diff_ss =  np.zeros((how_many_extras, how_many_it))
-    mse_testdata =  np.zeros((how_many_extras, how_many_it))
-     
     # generating test data the same for all binnings and iterations
     X_test, y_test = generate_test(e, std, size_test, beta_0_true, beta_1_true)
 
@@ -103,26 +106,26 @@ def ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, 
         print((iteration+1)/how_many_it)    # code progress
         
         X,y = generate_test(e, std, size_train, beta_0_true, beta_1_true)
-    
-        if ridge:
-            regressor = Ridge(alpha = alpha)  
-           
-        else:
-            regressor = LinearRegression()  
-            
-            
-            
+        
+        regressor = LinearRegression()  
         regressor.fit(X.reshape(-1,1), y) #training the algorithm
         y_predicted_unbinned = regressor.predict(X_test.reshape(-1,1))
-            
         mse_unbinned = mse(y_predicted_unbinned, y_test)
-        
         ss_unbinned = calc_ss(X, y)
-        
         diff = ss_unbinned - ss_unbinned
-        difference_ss[0, iteration],  abs_diff_ss[0,iteration] = diff, diff**2
-        mse_testdata[0, iteration] = mse_unbinned
-        
+        abs_diff_ss_dictionary['none'] [0, iteration] = diff**2
+        mse_testdata_dictionary['none'] [0, iteration] =  mse_unbinned
+    
+        for a in alpha:
+            regressor = Ridge(alpha = a)  
+            regressor.fit(X.reshape(-1,1), y) #training the algorithm
+            y_predicted_unbinned = regressor.predict(X_test.reshape(-1,1))
+            mse_unbinned = mse(y_predicted_unbinned, y_test)
+            ss_unbinned = calc_ss(X, y)
+            diff = ss_unbinned - ss_unbinned
+            abs_diff_ss_dictionary[str(a)] [0, iteration] = diff**2
+            mse_testdata_dictionary[str(a)] [0, iteration] =  mse_unbinned
+
         if type_transf in ['binned_centre', 'binned_random']:
             list_of_bins = transf(type_transf, list_wanted = extra)
             
@@ -135,26 +138,27 @@ def ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, 
             elif type_transf == 'multiplied_non_random':
                 new_X = data_transf(X, type_transf, constant = extra[i])
             
-            if ridge:
-                regressor = Ridge(alpha = alpha)  
-               
-            else:
-                regressor = LinearRegression() 
-            
+            regressor = LinearRegression()
             regressor.fit(new_X.reshape(-1,1), y) #training the algorithm
             y_predicted_binned = regressor.predict(X_test.reshape(-1,1))
-                
-         
             mse_binned = mse(y_predicted_binned, y_test)
-        
             ss_binned = calc_ss(new_X, y)
-            
             diff = ss_unbinned - ss_binned
-            difference_ss[i+1,iteration],  abs_diff_ss[i+1,iteration] = diff, diff**2
-       
-            mse_testdata[i+1,iteration] = mse_binned
+            abs_diff_ss_dictionary['none'] [i+1, iteration] = diff**2
+            mse_testdata_dictionary['none'] [i+1, iteration] =  mse_binned
+            
+            for a in alpha:
+              regressor = Ridge(alpha = a)  
+              regressor.fit(new_X.reshape(-1,1), y) #training the algorithm
+              y_predicted_binned = regressor.predict(X_test.reshape(-1,1))
+              mse_binned = mse(y_predicted_binned, y_test)
+              ss_binned = calc_ss(new_X, y)
+              diff = ss_unbinned - ss_binned
+              abs_diff_ss_dictionary[str(a)] [i+1, iteration] = diff**2
+              mse_testdata_dictionary[str(a)] [i+1, iteration] =  mse_binned
+           
     
-    return difference_ss, abs_diff_ss, mse_testdata
+    return abs_diff_ss_dictionary, mse_testdata_dictionary
 
 def plotting_against_mse(abs_diff_ss, mse_testdata, type_transf, parameters, size_test, size_train, how_many_it):
     plt.scatter(np.mean(abs_diff_ss,axis = 1), np.mean(mse_testdata,axis = 1))
@@ -218,22 +222,45 @@ elif type_transf == 'multiplied_non_random':
 
 
 #### Allows for the comparison against ridge regression for various penalties 
-list_of_alphas = [0.01, 0.1, 0.5, 2, 5, 10]
+alpha = [0.01, 0.1, 0.5, 2, 5, 10]
 
-difference_ss, abs_diff_ss, mse_testdata = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, False)
+abs_diff_ss_dictionary, mse_testdata_dictionary = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, True, alpha)
+
+
 plt.figure()
-plt.plot(np.mean(abs_diff_ss,axis = 1), np.mean(mse_testdata,axis = 1),'.', label='No L2')
-
-for alpha in list_of_alphas:
-    difference_ss, abs_diff_ss, mse_testdata = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, True,alpha)
-    plt.plot(np.mean(abs_diff_ss,axis = 1), np.mean(mse_testdata,axis = 1),'.', label='$\\alpha = $'+str(alpha))
-    
+plt.plot([0] + list(extra),np.mean(abs_diff_ss_dictionary['none'], axis = 1),'.', label = 'no penalty')
+for a in alpha:
+    plt.plot([0] + list(extra),np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),'.', label = '$\\alpha=$' + str(a))
 plt.legend()
-plt.show()   
+plt.ylabel('$E[(S(X) - S(X^{*}))^2]$')
+if type_transf in ['binned_centre', 'binned_random']:
+    plt.xlabel('bin size, $h$')
+elif type_transf == 'multiplied_non_random':
+    plt.xlabel('$\\epsilon$')
+plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
+            +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
+            +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test))
+  
+plt.show()
     
+
+
+
+
+plt.figure()
+plt.plot(np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),np.mean(mse_testdata_dictionary['none'] , axis = 1),'.', label = 'no penalty')
+for a in alpha:
+    plt.plot(np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),np.mean(mse_testdata_dictionary[str(a)] , axis = 1),'.', label = '$\\alpha=$' + str(a))
+plt.legend()
+plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
+plt.ylabel('predictive MSE')
+plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
+           +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
+           +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test))
+plt.show()
     
 # plotting_against_mse(abs_diff_ss, mse_testdata, type_transf, parameters, size_test, size_train, how_many_it)
-plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameters, size_test, size_train, how_many_it, True)
+# plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameters, size_test, size_train, how_many_it, True)
 
 # plt.plot(np.array([0] + list(extra)).flatten(), np.mean(mse_testdata,axis = 1))
 #### fitting logistic regression for bin size against E(sq difference)
