@@ -176,9 +176,14 @@ def plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameter_diction
 how_many_it = 300
 size_test, size_train = 1000, 100
 parameter_dictionary = {};
-parameter_dictionary["beta"] = [0.4, 1];
-parameter_dictionary["mean"] = [0];
-parameter_dictionary["std_dev"] = [1];
+# parameter_dictionary["beta"] = np.random.rand(5);
+# parameter_dictionary["mean"] = random.sample(range(0, 10), k=4);
+# parameter_dictionary["std_dev"] = random.choices(range(1, 5), k=4);
+parameter_dictionary["beta"] = [];
+parameter_dictionary["mean"] = random.sample(range(0, 10), k=4);
+parameter_dictionary["std_dev"] = random.choices(range(1, 5), k=4);
+
+
 # type_transf = 'multiplied_non_random'
 type_transf = 'binned_centre'
 
@@ -193,7 +198,17 @@ elif type_transf == 'multiplied_non_random':
 
 
 difference_ss, abs_diff_ss, mse_testdata = multivariate_ss_against_mse(how_many_it, parameter_dictionary, size_test, size_train, type_transf, extra)
-    
+
+binsize_list = [0] + list(extra)
+ss_list = np.mean(abs_diff_ss,axis = 1)
+mse_list = np.mean(mse_testdata,axis = 1)
+
+plt.plot(binsize_list,ss_list,'.')
+plt.show()
+plt.plot(ss_list,mse_list,'.')
+plt.show()
+
+
 plotting_against_mse(abs_diff_ss, mse_testdata, type_transf, parameter_dictionary, size_test, size_train, how_many_it)
 plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameter_dictionary, size_test, size_train, how_many_it)
 
