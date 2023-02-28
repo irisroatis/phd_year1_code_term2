@@ -55,7 +55,8 @@ def put_in_bins(data, bins, way_to_bin):
     return new_data
 
 def calc_ss(x,y):
-    return x.T @ y
+   return x.T @ y
+   # return sum(x)
 
 def generate_test(e, std, size, beta_0, beta_1):
     X = np.random.normal(e, std, size)
@@ -222,7 +223,9 @@ elif type_transf == 'multiplied_non_random':
 
 
 #### Allows for the comparison against ridge regression for various penalties 
-alpha = [0.01, 0.1, 0.5, 2, 5, 10]
+# alpha = [0.01, 0.1, 0.5, 2, 5, 10]
+alpha = [12]
+
 
 abs_diff_ss_dictionary, mse_testdata_dictionary = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, True, alpha)
 
@@ -248,7 +251,7 @@ plt.show()
 
 
 plt.figure()
-plt.plot(np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),np.mean(mse_testdata_dictionary['none'] , axis = 1),'.', label = 'no penalty')
+plt.plot(np.mean(abs_diff_ss_dictionary['none'], axis = 1),np.mean(mse_testdata_dictionary['none'] , axis = 1),'.', label = 'no penalty')
 for a in alpha:
     plt.plot(np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),np.mean(mse_testdata_dictionary[str(a)] , axis = 1),'.', label = '$\\alpha=$' + str(a))
 plt.legend()

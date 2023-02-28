@@ -17,7 +17,7 @@ import random
 from sklearn.linear_model import LinearRegression, LogisticRegression, Ridge
 import pandas as pd
 from scipy.optimize import curve_fit
-
+from sklearn.tree import DecisionTreeRegressor
 
 def put_in_bins(data, bins, way_to_bin):
     digitized = np.digitize(data,bins)
