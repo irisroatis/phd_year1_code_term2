@@ -12,6 +12,7 @@ import random
 from sklearn.linear_model import LinearRegression, LogisticRegression, Ridge, Lasso
 import pandas as pd
 from scipy.optimize import curve_fit
+from sklearn.tree import DecisionTreeRegressor
 
 def logistic_curve(X, a, b, c, d):
     """
@@ -90,6 +91,8 @@ def predict_regressions(X, y, X_test, type_regression, a = None):
         regressor = Lasso(alpha = a)
     elif type_regression == 'simple':
         regressor = LinearRegression()      
+    elif type_regression == 'cart':
+        regressor = DecisionTreeRegressor()  
     regressor.fit(X.reshape(-1,1), y) #training the algorithm
     y_predicted = regressor.predict(X_test.reshape(-1,1))
     return  y_predicted
@@ -113,10 +116,11 @@ def ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, 
     # generating test data the same for all binnings and iterations
     X_test, y_test = generate_test(e, std, size_test, beta_0_true, beta_1_true)
 
-    
+    print('For '+str(type_regression)+ ' regression: \n')
     for iteration in range(how_many_it):
         
-        print((iteration+1)/how_many_it)    # code progress
+        if iteration % 20 == 0:
+            print(np.round((iteration+1)/how_many_it,2))    # code progress
         
         X,y = generate_test(e, std, size_train, beta_0_true, beta_1_true)
   
@@ -282,6 +286,25 @@ plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $
            +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
            +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test)+'\n Transformation:'+str(type_regression))
 plt.show()
+
+
+
+type_regression = 'cart'
+abs_diff_ss_dictionary, mse_testdata_dictionary = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, type_regression, alpha)
+
+
+plt.figure()
+plt.plot(np.mean(abs_diff_ss_dictionary['none'], axis = 1),np.mean(mse_testdata_dictionary['none'] , axis = 1),'.', label = 'no penalty')
+for a in alpha:
+    plt.plot(np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),np.mean(mse_testdata_dictionary[str(a)] , axis = 1),'.', label = '$\\alpha=$' + str(a))
+plt.legend()
+plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
+plt.ylabel('predictive MSE')
+plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
+           +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
+           +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test)+'\n Transformation:'+str(type_regression))
+plt.show()
+    
     
 # plotting_against_mse(abs_diff_ss, mse_testdata, type_transf, parameters, size_test, size_train, how_many_it)
 # plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameters, size_test, size_train, how_many_it, True)

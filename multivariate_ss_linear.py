@@ -179,10 +179,13 @@ parameter_dictionary = {};
 # parameter_dictionary["beta"] = np.random.rand(5);
 # parameter_dictionary["mean"] = random.sample(range(0, 10), k=4);
 # parameter_dictionary["std_dev"] = random.choices(range(1, 5), k=4);
-parameter_dictionary["beta"] = [];
-parameter_dictionary["mean"] = random.sample(range(0, 10), k=4);
-parameter_dictionary["std_dev"] = random.choices(range(1, 5), k=4);
+# parameter_dictionary["beta"] = [0.4, 1, 0.2, 0.5, 0.8, 0.9, 0.2, 0.1, 2, 0.4, 0.55];
+# parameter_dictionary["mean"] = [0, 1, 5, 2, 4, 2, 7, 3, 0, 6];
+# parameter_dictionary["std_dev"] = [1, 3, 1, 2, 3, 5, 1, 2, 4, 2];
 
+parameter_dictionary["beta"] = [0.4, 1, 0.2, 0.5, 2, 0.7, 0.55];
+parameter_dictionary["mean"] = [0, 1, 3, 5, 2, 1];
+parameter_dictionary["std_dev"] = [1, 5, 2, 1.5, 3, 4.5];
 
 # type_transf = 'multiplied_non_random'
 type_transf = 'binned_centre'
@@ -200,17 +203,48 @@ elif type_transf == 'multiplied_non_random':
 difference_ss, abs_diff_ss, mse_testdata = multivariate_ss_against_mse(how_many_it, parameter_dictionary, size_test, size_train, type_transf, extra)
 
 binsize_list = [0] + list(extra)
+length_binsize_list = len(binsize_list)
 ss_list = np.mean(abs_diff_ss,axis = 1)
 mse_list = np.mean(mse_testdata,axis = 1)
 
+up_until = length_binsize_list //3
+
+
+plt.figure()
+plt.subplot(221)
 plt.plot(binsize_list,ss_list,'.')
+
+plt.subplot(222)
+plt.plot(binsize_list[:up_until],ss_list[:up_until],'.')
+
+plt.subplot(223)
+plt.plot(binsize_list[up_until:up_until*2],ss_list[up_until:up_until*2],'.')
+
+plt.subplot(224)
+plt.plot(binsize_list[up_until*2:],ss_list[up_until*2:],'.')
+
+plt.suptitle('bin size $h$ against $E[(S(X) - S(X^{*}))^2]$, dimension: '+str(len(parameter_dictionary["std_dev"])))
 plt.show()
+
+
+plt.figure()
+plt.subplot(221)
 plt.plot(ss_list,mse_list,'.')
+
+plt.subplot(222)
+plt.plot(ss_list[:up_until],mse_list[:up_until],'.')
+
+plt.subplot(223)
+plt.plot(ss_list[up_until:up_until*2],mse_list[up_until:up_until*2],'.')
+
+plt.subplot(224)
+plt.plot(ss_list[up_until*2:],mse_list[up_until*2:],'.')
+
+plt.suptitle('$E[(S(X) - S(X^{*}))^2]$ against predictive MSE, dimension: '+str(len(parameter_dictionary["std_dev"])))
 plt.show()
 
-
-plotting_against_mse(abs_diff_ss, mse_testdata, type_transf, parameter_dictionary, size_test, size_train, how_many_it)
-plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameter_dictionary, size_test, size_train, how_many_it)
+# plotting_against_mse(abs_diff_ss, mse_testdata, type_transf, parameter_dictionary, size_test, size_train, how_many_it)
+# plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameter_dictionary, size_test, size_train, how_many_it)
 
 # plt.plot(np.array([0] + list(extra)).flatten(), np.mean(mse_testdata,axis = 1))
 #### fitting logistic regression for bin size against E(sq difference)
