@@ -92,7 +92,7 @@ def predict_regressions(X, y, X_test, type_regression, a = None):
     elif type_regression == 'simple':
         regressor = LinearRegression()      
     elif type_regression == 'cart':
-        regressor = DecisionTreeRegressor()  
+        regressor = DecisionTreeRegressor(criterion='absolute_error')  
     regressor.fit(X.reshape(-1,1), y) #training the algorithm
     y_predicted = regressor.predict(X_test.reshape(-1,1))
     return  y_predicted
@@ -123,8 +123,11 @@ def ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, 
             print(np.round((iteration+1)/how_many_it,2))    # code progress
         
         X,y = generate_test(e, std, size_train, beta_0_true, beta_1_true)
-  
-        y_predicted_unbinned = predict_regressions(X, y, X_test, 'simple')
+   
+        if type_regression == 'cart':
+            y_predicted_unbinned = predict_regressions(X, y, X_test, 'cart')
+        else:
+            y_predicted_unbinned = predict_regressions(X, y, X_test, 'simple')
         mse_unbinned = mse(y_predicted_unbinned, y_test)
         ss_unbinned = calc_ss(X, y)
         diff = ss_unbinned - ss_unbinned
@@ -151,8 +154,10 @@ def ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, 
             elif type_transf == 'multiplied_non_random':
                 new_X = data_transf(X, type_transf, constant = extra[i])
             
-           
-            y_predicted_binned = predict_regressions(new_X, y, X_test, 'simple')
+            if type_regression == 'cart':
+                y_predicted_binned = predict_regressions(new_X, y, X_test, 'cart')
+            else:
+                y_predicted_binned = predict_regressions(new_X, y, X_test, 'simple')
             mse_binned = mse(y_predicted_binned, y_test)
             ss_binned = calc_ss(new_X, y)
             diff = ss_unbinned - ss_binned
@@ -231,72 +236,70 @@ elif type_transf == 'multiplied_non_random':
     extra = np.linspace(0.01, 5, 50)
 
 
-#### Allows for the comparison against ridge regression for various penalties 
-alpha = [0.01, 0.1, 0.5, 2, 5, 10]
-# alpha = [12]
+# #### Allows for the comparison against ridge regression for various penalties 
+# alpha = [0.01, 0.1, 0.5, 2, 5, 10]
+# # alpha = [12]
 
-type_regression = 'ridge'
-abs_diff_ss_dictionary, mse_testdata_dictionary = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, type_regression, alpha)
+# type_regression = 'ridge'
+# abs_diff_ss_dictionary, mse_testdata_dictionary = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, type_regression, alpha)
 
 
-plt.figure()
-plt.plot([0] + list(extra),np.mean(abs_diff_ss_dictionary['none'], axis = 1),'.', label = 'no penalty')
-for a in alpha:
-    plt.plot([0] + list(extra),np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),'.', label = '$\\alpha=$' + str(a))
-plt.legend()
-plt.ylabel('$E[(S(X) - S(X^{*}))^2]$')
-if type_transf in ['binned_centre', 'binned_random']:
-    plt.xlabel('bin size, $h$')
-elif type_transf == 'multiplied_non_random':
-    plt.xlabel('$\\epsilon$')
-plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
-            +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
-            +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test) )
+# plt.figure()
+# plt.plot([0] + list(extra),np.mean(abs_diff_ss_dictionary['none'], axis = 1),'.', label = 'no penalty')
+# for a in alpha:
+#     plt.plot([0] + list(extra),np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),'.', label = '$\\alpha=$' + str(a))
+# plt.legend()
+# plt.ylabel('$E[(S(X) - S(X^{*}))^2]$')
+# if type_transf in ['binned_centre', 'binned_random']:
+#     plt.xlabel('bin size, $h$')
+# elif type_transf == 'multiplied_non_random':
+#     plt.xlabel('$\\epsilon$')
+# plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
+#             +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
+#             +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test) )
   
-plt.show()
+# plt.show()
     
 
-plt.figure()
-plt.plot(np.mean(abs_diff_ss_dictionary['none'], axis = 1),np.mean(mse_testdata_dictionary['none'] , axis = 1),'.', label = 'no penalty')
-for a in alpha:
-    plt.plot(np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),np.mean(mse_testdata_dictionary[str(a)] , axis = 1),'.', label = '$\\alpha=$' + str(a))
-plt.legend()
-plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
-plt.ylabel('predictive MSE')
-plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
-           +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
-           +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test)+'\n Transformation:'+str(type_regression))
-plt.show()
+# plt.figure()
+# plt.plot(np.mean(abs_diff_ss_dictionary['none'], axis = 1),np.mean(mse_testdata_dictionary['none'] , axis = 1),'.', label = 'no penalty')
+# for a in alpha:
+#     plt.plot(np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),np.mean(mse_testdata_dictionary[str(a)] , axis = 1),'.', label = '$\\alpha=$' + str(a))
+# plt.legend()
+# plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
+# plt.ylabel('predictive MSE')
+# plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
+#            +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
+#            +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test)+'\n Transformation:'+str(type_regression))
+# plt.show()
     
 
 
 
-type_regression = 'lasso'
-abs_diff_ss_dictionary, mse_testdata_dictionary = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, type_regression, alpha)
+# type_regression = 'lasso'
+# abs_diff_ss_dictionary, mse_testdata_dictionary = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, type_regression, alpha)
 
 
-plt.figure()
-plt.plot(np.mean(abs_diff_ss_dictionary['none'], axis = 1),np.mean(mse_testdata_dictionary['none'] , axis = 1),'.', label = 'no penalty')
-for a in alpha:
-    plt.plot(np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),np.mean(mse_testdata_dictionary[str(a)] , axis = 1),'.', label = '$\\alpha=$' + str(a))
-plt.legend()
-plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
-plt.ylabel('predictive MSE')
-plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
-           +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
-           +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test)+'\n Transformation:'+str(type_regression))
-plt.show()
+# plt.figure()
+# plt.plot(np.mean(abs_diff_ss_dictionary['none'], axis = 1),np.mean(mse_testdata_dictionary['none'] , axis = 1),'.', label = 'no penalty')
+# for a in alpha:
+#     plt.plot(np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),np.mean(mse_testdata_dictionary[str(a)] , axis = 1),'.', label = '$\\alpha=$' + str(a))
+# plt.legend()
+# plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
+# plt.ylabel('predictive MSE')
+# plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
+#            +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
+#            +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test)+'\n Transformation:'+str(type_regression))
+# plt.show()
 
 
 
 type_regression = 'cart'
-abs_diff_ss_dictionary, mse_testdata_dictionary = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, type_regression, alpha)
+abs_diff_ss_dictionary, mse_testdata_dictionary = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, type_regression, alpha = [])
 
 
 plt.figure()
 plt.plot(np.mean(abs_diff_ss_dictionary['none'], axis = 1),np.mean(mse_testdata_dictionary['none'] , axis = 1),'.', label = 'no penalty')
-for a in alpha:
-    plt.plot(np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),np.mean(mse_testdata_dictionary[str(a)] , axis = 1),'.', label = '$\\alpha=$' + str(a))
 plt.legend()
 plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
 plt.ylabel('predictive MSE')
