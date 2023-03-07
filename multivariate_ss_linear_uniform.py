@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Feb 22 12:53:42 2023
+Created on Tue Mar  7 15:49:14 2023
 
 @author: ir318
 """
-
 
 
 ##### THIS CODE ALLOWS FOR BOTH UNIVARIATE & MULTIVARIATE CASE
@@ -49,7 +48,7 @@ def generate_test_multivariate(e, std, size, beta):
     X = np.zeros((size, what_dimension+1))
     X[:,0] = 1
     for i in range(what_dimension):
-        X[:,i+1] = np.random.normal(e[i], std[i], size)
+        X[:,i+1] = np.random.uniform(e[i], std[i], size)
     y = X @ beta + np.random.normal(0, 1, size)
     X = X[:,1:]
     return X, y
@@ -75,8 +74,8 @@ def data_transf(X, type_transf, bins = None, constant = None):
     
 def multivariate_ss_against_mse(how_many_it, parameter_dictionary, size_test, size_train, type_transf, extra=None):
     beta = parameter_dictionary['beta']
-    e =  parameter_dictionary['mean']
-    std =  parameter_dictionary['std_dev']
+    lower =  parameter_dictionary['lower']
+    upper =  parameter_dictionary['upper']
 
     how_many_extras = len(extra) + 1
 
@@ -86,14 +85,14 @@ def multivariate_ss_against_mse(how_many_it, parameter_dictionary, size_test, si
     mse_testdata =  np.zeros((how_many_extras, how_many_it))
      
     # generating test data the same for all binnings and iterations
-    X_test, y_test = generate_test_multivariate(e, std, size_test, beta)
+    X_test, y_test = generate_test_multivariate(lower, upper, size_test, beta)
 
     
     for iteration in range(how_many_it):
         
         print((iteration+1)/how_many_it)    # code progress
         
-        X,y = generate_test_multivariate(e, std, size_train, beta)
+        X,y = generate_test_multivariate(lower, upper, size_train, beta)
     
         regressor = LinearRegression()  
   
@@ -186,15 +185,15 @@ parameter_dictionary = {};
 # parameter_dictionary["std_dev"] = [1, 3, 1, 2, 3, 5, 1, 2, 4, 2];
 
 
-trial_1 = [0,1];
-trial_2 = [0,3];
-trial_3 = [0,5];
+trial_1 = [0];
+trial_2 = [3];
+trial_3 = [5];
 
 
 
-parameter_dictionary["beta"] = [1.5, 1, 2];
-parameter_dictionary["mean"] = trial_1;
-parameter_dictionary["std_dev"] = [1, 1, 1];
+parameter_dictionary["beta"] = [1.5, 2];
+parameter_dictionary["lower"] = trial_1;
+parameter_dictionary["upper"] = [6];
 
 # type_transf = 'multiplied_non_random'
 type_transf = 'binned_centre'
@@ -220,70 +219,70 @@ up_until = length_binsize_list //3
 
 
 ############## WHEN SINGLE PLOTS ARE WANTED
-plotting_against_mse(abs_diff_ss, mse_testdata, type_transf, parameter_dictionary, size_test, size_train, how_many_it)
-plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameter_dictionary, size_test, size_train, how_many_it)
+# plotting_against_mse(abs_diff_ss, mse_testdata, type_transf, parameter_dictionary, size_test, size_train, how_many_it)
+# plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameter_dictionary, size_test, size_train, how_many_it)
 
 
 ############## IF ZOOMED IN PLOTS ARE WANTED
-plt.figure()
-plt.subplot(221)
-plt.plot(binsize_list,ss_list,'.')
+# plt.figure()
+# plt.subplot(221)
+# plt.plot(binsize_list,ss_list,'.')
 
-plt.subplot(222)
-plt.plot(binsize_list[:up_until],ss_list[:up_until],'.')
+# plt.subplot(222)
+# plt.plot(binsize_list[:up_until],ss_list[:up_until],'.')
 
-plt.subplot(223)
-plt.plot(binsize_list[up_until:up_until*2],ss_list[up_until:up_until*2],'.')
+# plt.subplot(223)
+# plt.plot(binsize_list[up_until:up_until*2],ss_list[up_until:up_until*2],'.')
 
-plt.subplot(224)
-plt.plot(binsize_list[up_until*2:],ss_list[up_until*2:],'.')
+# plt.subplot(224)
+# plt.plot(binsize_list[up_until*2:],ss_list[up_until*2:],'.')
 
-plt.suptitle('bin size $h$ against $E[(S(X) - S(X^{*}))^2]$, dimension: '+str(len(parameter_dictionary["std_dev"])))
-plt.show()
+# plt.suptitle('bin size $h$ against $E[(S(X) - S(X^{*}))^2]$, dimension: '+str(len(parameter_dictionary["std_dev"])))
+# plt.show()
 
 
-plt.figure()
-plt.subplot(221)
-plt.plot(ss_list,mse_list,'.')
+# plt.figure()
+# plt.subplot(221)
+# plt.plot(ss_list,mse_list,'.')
 
-plt.subplot(222)
-plt.plot(ss_list[:up_until],mse_list[:up_until],'.')
+# plt.subplot(222)
+# plt.plot(ss_list[:up_until],mse_list[:up_until],'.')
 
-plt.subplot(223)
-plt.plot(ss_list[up_until:up_until*2],mse_list[up_until:up_until*2],'.')
+# plt.subplot(223)
+# plt.plot(ss_list[up_until:up_until*2],mse_list[up_until:up_until*2],'.')
 
-plt.subplot(224)
-plt.plot(ss_list[up_until*2:],mse_list[up_until*2:],'.')
+# plt.subplot(224)
+# plt.plot(ss_list[up_until*2:],mse_list[up_until*2:],'.')
 
-plt.suptitle('$E[(S(X) - S(X^{*}))^2]$ against predictive MSE, dimension: '+str(len(parameter_dictionary["std_dev"])))
-plt.show()
+# plt.suptitle('$E[(S(X) - S(X^{*}))^2]$ against predictive MSE, dimension: '+str(len(parameter_dictionary["std_dev"])))
+# plt.show()
 
 ############# COMPARING VARIOUS PARAMETER VALUES 
 
 ###### plot bin size against diff squared
 
 plt.figure()
-plt.plot(ss_list,mse_list,'.',label ='$\\mu = $' + str(parameter_dictionary["mean"]))
+plt.plot(ss_list,mse_list,'.',label ='lower ='  + str(parameter_dictionary["lower"]))
 
 
-parameter_dictionary["mean"] = trial_2
+parameter_dictionary["lower"] = trial_2
 difference_ss2, abs_diff_ss2, mse_testdata2 = multivariate_ss_against_mse(how_many_it, parameter_dictionary, size_test, size_train, type_transf, extra)
 ss_list2 = np.mean(abs_diff_ss2,axis = 1)
 mse_list2 = np.mean(mse_testdata2,axis = 1)
-plt.plot(ss_list2,mse_list2,'.',label ='$\\mu = $' + str(parameter_dictionary["mean"]))
+plt.plot(ss_list2,mse_list2,'.',label ='lower ='  + str(parameter_dictionary["lower"]))
 
 
-parameter_dictionary["mean"] = trial_3
+parameter_dictionary["lower"] = trial_3
 difference_ss3, abs_diff_ss3, mse_testdata3 = multivariate_ss_against_mse(how_many_it, parameter_dictionary, size_test, size_train, type_transf, extra)
 ss_list3 = np.mean(abs_diff_ss3,axis = 1)
 mse_list3 = np.mean(mse_testdata3,axis = 1)
-plt.plot(ss_list3,mse_list3,'.',label ='$\\mu = $' + str(parameter_dictionary["mean"]))
+plt.plot(ss_list3,mse_list3,'.',label ='lower =' + str(parameter_dictionary["lower"]))
 
 
 plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
 plt.ylabel('predictive MSE')
 plt.legend()
-plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta$ = ' +str(parameter_dictionary["beta"] ) +' $\\sigma$ = ' +str(parameter_dictionary["std_dev"] ) 
+plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta$ = ' +str(parameter_dictionary["beta"] ) +' upper= ' +str(parameter_dictionary["upper"] ) 
           +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test))
 plt.show()
 
@@ -292,20 +291,20 @@ plt.show()
 ###### plot diff squared against MSE
 
 plt.figure()
-parameter_dictionary["mean"] = trial_1
-plt.plot(binsize_list,ss_list,'.',label ='$\\mu = $' + str(parameter_dictionary["mean"]))
+parameter_dictionary["lower"] = trial_1
+plt.plot(binsize_list,ss_list,'.',label ='lower ='  + str(parameter_dictionary["lower"]))
 
 
-parameter_dictionary["mean"] = trial_2
-plt.plot(binsize_list,ss_list2,'.',label ='$\\mu = $' + str(parameter_dictionary["mean"]))
+parameter_dictionary["lower"] = trial_2
+plt.plot(binsize_list,ss_list2,'.',label ='lower ='  + str(parameter_dictionary["lower"]))
 
 
-parameter_dictionary["mean"] = trial_3
-plt.plot(binsize_list,ss_list3,'.',label ='$\\mu = $' + str(parameter_dictionary["mean"]))
+parameter_dictionary["lower"] = trial_3
+plt.plot(binsize_list,ss_list3,'.',label ='lower =' + str(parameter_dictionary["lower"]))
 
 plt.xlabel('bin size, $h$')
 plt.ylabel('$E[(S(X) - S(X^{*}))^2]$')
 plt.legend()
-plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta$ = ' +str(parameter_dictionary["beta"] ) +' $\\sigma$ = ' +str(parameter_dictionary["std_dev"] ) 
+plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta$ = ' +str(parameter_dictionary["beta"] ) +' upper = ' +str(parameter_dictionary["upper"] ) 
           +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test))
 plt.show()
