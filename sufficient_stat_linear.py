@@ -13,6 +13,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression, Ridge, La
 import pandas as pd
 from scipy.optimize import curve_fit
 from sklearn.tree import DecisionTreeRegressor
+from sklearn import tree
 
 def logistic_curve(X, a, b, c, d):
     """
@@ -53,6 +54,8 @@ def put_in_bins(data, bins, way_to_bin):
         bin_size = bins[1] - bins[0]
         random_points_bins = bins[:len(bins)-1] + random.uniform(0, bin_size)
         new_data = random_points_bins[digitized-1]
+    elif way_to_bin == 'rank':
+        new_data = digitized;
     return new_data
 
 def calc_ss(x,y):
@@ -68,7 +71,7 @@ def mse(y_predicted, actual_y):
     return sum((y_predicted - actual_y)**2) / len(actual_y)
 
 def transf(type_transf, list_wanted = None):
-    if type_transf in ['binned_centre', 'binned_random']:
+    if type_transf in ['binned_centre', 'binned_random','rank']:
         list_of_bins = []
         for i in range(len(list_wanted)):
             bin_size = list_wanted[i]
@@ -78,13 +81,13 @@ def transf(type_transf, list_wanted = None):
         return list_of_bins
     
 def data_transf(X, type_transf, bins = None, constant = None):
-    if type_transf in ['binned_centre', 'binned_random']:
+    if type_transf in ['binned_centre', 'binned_random','rank']:
         return put_in_bins(X, bins, type_transf)
     elif type_transf == 'multiplied_non_random':
         return (1 + constant) * X
     
     
-def predict_regressions(X, y, X_test, type_regression, a = None):
+def predict_regressions(X, y, X_test, type_regression, a = None, want_the_beta = False):
     if type_regression =='ridge':
         regressor = Ridge(alpha = a)  
     elif type_regression == 'lasso':
@@ -92,18 +95,33 @@ def predict_regressions(X, y, X_test, type_regression, a = None):
     elif type_regression == 'simple':
         regressor = LinearRegression()      
     elif type_regression == 'cart':
-        regressor = DecisionTreeRegressor(criterion='absolute_error')  
+        regressor = DecisionTreeRegressor()  
+        
+        
     regressor.fit(X.reshape(-1,1), y) #training the algorithm
-    y_predicted = regressor.predict(X_test.reshape(-1,1))
-    return  y_predicted
     
-def ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra=None, type_regression = None, alpha = None):
+    # plt.figure(figsize=(25,20))
+    # _ = tree.plot_tree(regressor,filled=True)
+    # plt.show()
+    
+    y_predicted = regressor.predict(X_test.reshape(-1,1))
+    if not want_the_beta:
+        return y_predicted
+    else:
+        return y_predicted, regressor.intercept_, regressor.coef_
+    
+def ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra=None, type_regression = None, alpha = None, want_the_betas = False):
     beta_0_true = parameters[0]
     beta_1_true = parameters[1]
     e = parameters[2]
     std = parameters[3]
-
+    
     how_many_extras = len(extra) + 1
+    
+    if want_the_betas:
+        estimated_betas_0 = {'none':np.zeros((how_many_extras, how_many_it))}
+        estimated_betas_1 = {'none':np.zeros((how_many_extras, how_many_it))}
+
 
     abs_diff_ss_dictionary = {'none':np.zeros((how_many_extras, how_many_it))}
     mse_testdata_dictionary = {'none':np.zeros((how_many_extras, how_many_it))}
@@ -112,6 +130,12 @@ def ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, 
     for i in range(len(alpha)):
         abs_diff_ss_dictionary[str(alpha[i])] =  np.zeros((how_many_extras, how_many_it))
         mse_testdata_dictionary[str(alpha[i])]  =  np.zeros((how_many_extras, how_many_it))
+        
+        
+        if want_the_betas:
+            estimated_betas_0[str(alpha[i])] =  np.zeros((how_many_extras, how_many_it))
+            estimated_betas_1[str(alpha[i])] =  np.zeros((how_many_extras, how_many_it))
+
 
     # generating test data the same for all binnings and iterations
     X_test, y_test = generate_test(e, std, size_test, beta_0_true, beta_1_true)
@@ -125,29 +149,40 @@ def ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, 
         X,y = generate_test(e, std, size_train, beta_0_true, beta_1_true)
    
         if type_regression == 'cart':
-            y_predicted_unbinned = predict_regressions(X, y, X_test, 'cart')
+            if want_the_betas:
+                y_predicted_unbinned, estimated_betas_0['none'][0, iteration],  estimated_betas_1['none'] [0, iteration] = predict_regressions(X, y, X_test, 'cart', want_the_beta = True)
+            else:
+                y_predicted_unbinned = predict_regressions(X, y, X_test, 'cart', want_the_beta = False)
         else:
-            y_predicted_unbinned = predict_regressions(X, y, X_test, 'simple')
+            if want_the_betas:
+                y_predicted_unbinned, estimated_betas_0['none'] [0, iteration],  estimated_betas_1['none'] [0, iteration] = predict_regressions(X, y, X_test, 'simple',want_the_beta =  True)
+            else:
+                y_predicted_unbinned = predict_regressions(X, y, X_test, 'simple',want_the_beta =  False)
+
+        
         mse_unbinned = mse(y_predicted_unbinned, y_test)
         ss_unbinned = calc_ss(X, y)
         diff = ss_unbinned - ss_unbinned
         abs_diff_ss_dictionary['none'] [0, iteration] = diff**2
         mse_testdata_dictionary['none'] [0, iteration] =  mse_unbinned
-    
+        
         for a in alpha:
-            y_predicted_unbinned = predict_regressions(X, y, X_test, type_regression, a)
+            if want_the_betas:
+                y_predicted_unbinned,  estimated_betas_0[str(a)] [0, iteration],  estimated_betas_1[str(a)] [0, iteration] = predict_regressions(X, y, X_test, type_regression, a, want_the_beta =  True)
+            else:
+                y_predicted_unbinned = predict_regressions(X, y, X_test, type_regression, a, want_the_beta = False)
             mse_unbinned = mse(y_predicted_unbinned, y_test)
             ss_unbinned = calc_ss(X, y)
             diff = ss_unbinned - ss_unbinned
             abs_diff_ss_dictionary[str(a)] [0, iteration] = diff**2
             mse_testdata_dictionary[str(a)] [0, iteration] =  mse_unbinned
 
-        if type_transf in ['binned_centre', 'binned_random']:
+        if type_transf in ['binned_centre', 'binned_random', 'rank']:
             list_of_bins = transf(type_transf, list_wanted = extra)
             
         for i in range(how_many_extras - 1):
             
-            if type_transf in ['binned_centre', 'binned_random']:
+            if type_transf in ['binned_centre', 'binned_random','rank']:
                 bins = list_of_bins[i] 
                 new_X = data_transf(X, type_transf, bins)
                 
@@ -155,9 +190,16 @@ def ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, 
                 new_X = data_transf(X, type_transf, constant = extra[i])
             
             if type_regression == 'cart':
-                y_predicted_binned = predict_regressions(new_X, y, X_test, 'cart')
+                if want_the_betas:
+                    y_predicted_binned, estimated_betas_0['none'] [i+1, iteration], estimated_betas_1['none'] [i+1, iteration] = predict_regressions(new_X, y, X_test, 'cart',want_the_beta =  True)
+                else:
+                    y_predicted_binned = predict_regressions(new_X, y, X_test, 'cart',want_the_beta =  False)
             else:
-                y_predicted_binned = predict_regressions(new_X, y, X_test, 'simple')
+                if want_the_betas:
+                    y_predicted_binned, estimated_betas_0['none'] [i+1, iteration], estimated_betas_1['none'] [i+1, iteration] = predict_regressions(new_X, y, X_test, 'simple',want_the_beta =  True)
+                else:
+                    y_predicted_binned = predict_regressions(new_X, y, X_test, 'simple',want_the_beta =  False)
+                    
             mse_binned = mse(y_predicted_binned, y_test)
             ss_binned = calc_ss(new_X, y)
             diff = ss_unbinned - ss_binned
@@ -165,16 +207,21 @@ def ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, 
             mse_testdata_dictionary['none'] [i+1, iteration] =  mse_binned
             
             for a in alpha:
-               
-                y_predicted_binned = predict_regressions(new_X, y, X_test, type_regression, a)
+                if want_the_betas:
+                    y_predicted_binned, estimated_betas_0[str(a)] [i+1, iteration], estimated_betas_1[str(a)] [i+1, iteration]  = predict_regressions(new_X, y, X_test, type_regression, a,want_the_beta =  True)
+                else:
+                    y_predicted_binned = predict_regressions(new_X, y, X_test, type_regression, a, want_the_beta = False)
+  
                 mse_binned = mse(y_predicted_binned, y_test)
                 ss_binned = calc_ss(new_X, y)
                 diff = ss_unbinned - ss_binned
                 abs_diff_ss_dictionary[str(a)] [i+1, iteration] = diff**2
                 mse_testdata_dictionary[str(a)] [i+1, iteration] =  mse_binned
            
-    
-    return abs_diff_ss_dictionary, mse_testdata_dictionary
+    if not want_the_betas:
+        return abs_diff_ss_dictionary, mse_testdata_dictionary
+    else:
+        return abs_diff_ss_dictionary, mse_testdata_dictionary, estimated_betas_0, estimated_betas_1
 
 def plotting_against_mse(abs_diff_ss, mse_testdata, type_transf, parameters, size_test, size_train, how_many_it):
     plt.scatter(np.mean(abs_diff_ss,axis = 1), np.mean(mse_testdata,axis = 1))
@@ -224,31 +271,35 @@ def plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameters, size_
 
 how_many_it = 300
 size_test, size_train = 1000, 100
-parameters = [0.4, 1, 0, 1];
+parameters = [1, 1, 0, 1];
 # type_transf = 'multiplied_non_random'
 type_transf = 'binned_centre'
-random.seed(1)
 
-if type_transf in ['binned_centre', 'binned_random']:
+
+if type_transf in ['binned_centre', 'binned_random','rank']:
     max_bin_size = 15
     extra = np.linspace(0.01, max_bin_size, 70)
 elif type_transf == 'multiplied_non_random':
     extra = np.linspace(0.01, 5, 50)
 
 
-# #### Allows for the comparison against ridge regression for various penalties 
-# alpha = [0.01, 0.1, 0.5, 2, 5, 10]
-# # alpha = [12]
-
-# type_regression = 'ridge'
-# abs_diff_ss_dictionary, mse_testdata_dictionary = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, type_regression, alpha)
 
 
+############ DIFFERENT PLOTS FOR RIDGE AND LASSO REGRESSION
+
+#### Allows for the comparison against ridge regression for various penalties 
+alpha = [0.01, 0.1,0.15, 0.25, 0.5, 0.75, 1, 2, 5, 10]
+# alpha = [12]
+
+
+
+# ##### SIMPLE
+
+# type_regression = 'simple'
+# abs_diff_ss_dictionary, mse_testdata_dictionary,e1,e2 = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, type_regression, alpha = [], want_the_betas=True)
 # plt.figure()
 # plt.plot([0] + list(extra),np.mean(abs_diff_ss_dictionary['none'], axis = 1),'.', label = 'no penalty')
-# for a in alpha:
-#     plt.plot([0] + list(extra),np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),'.', label = '$\\alpha=$' + str(a))
-# plt.legend()
+# plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 # plt.ylabel('$E[(S(X) - S(X^{*}))^2]$')
 # if type_transf in ['binned_centre', 'binned_random']:
 #     plt.xlabel('bin size, $h$')
@@ -259,55 +310,169 @@ elif type_transf == 'multiplied_non_random':
 #             +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test) )
   
 # plt.show()
-    
 
 # plt.figure()
 # plt.plot(np.mean(abs_diff_ss_dictionary['none'], axis = 1),np.mean(mse_testdata_dictionary['none'] , axis = 1),'.', label = 'no penalty')
-# for a in alpha:
-#     plt.plot(np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),np.mean(mse_testdata_dictionary[str(a)] , axis = 1),'.', label = '$\\alpha=$' + str(a))
 # plt.legend()
 # plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
 # plt.ylabel('predictive MSE')
 # plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
-#            +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
-#            +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test)+'\n Transformation:'+str(type_regression))
-# plt.show()
-    
-
-
-
-# type_regression = 'lasso'
-# abs_diff_ss_dictionary, mse_testdata_dictionary = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, type_regression, alpha)
-
-
-# plt.figure()
-# plt.plot(np.mean(abs_diff_ss_dictionary['none'], axis = 1),np.mean(mse_testdata_dictionary['none'] , axis = 1),'.', label = 'no penalty')
-# for a in alpha:
-#     plt.plot(np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),np.mean(mse_testdata_dictionary[str(a)] , axis = 1),'.', label = '$\\alpha=$' + str(a))
-# plt.legend()
-# plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
-# plt.ylabel('predictive MSE')
-# plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
-#            +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
-#            +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test)+'\n Transformation:'+str(type_regression))
+#             +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
+#             +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test)+'\n Transformation:'+str(type_regression))
 # plt.show()
 
+# plt.plot([0]+ list(extra), np.mean(e1['none'],axis = 1),'.')
 
+#### RIDGE
 
-type_regression = 'cart'
-abs_diff_ss_dictionary, mse_testdata_dictionary = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, type_regression, alpha = [])
+# alpha = np.round(10 ** np.linspace(0.1, 3, 10),0)
+alpha = np.array([1, 5, 10, 25, 50, 100])
+alpha = np.concatenate((np.array([0.01, 0.1, 0.5]), alpha))
+type_regression = 'ridge';
+want_the_betas = True;
+abs_diff_ss_dictionary, mse_testdata_dictionary, e1, e2 = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, type_regression, alpha, want_the_betas)
 
 
 plt.figure()
+plt.plot([0] + list(extra),np.mean(abs_diff_ss_dictionary['none'], axis = 1),'.', label = 'no penalty')
+for a in alpha:
+    plt.plot([0] + list(extra),np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),'.', label = '$\\alpha=$' + str(a))
+plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+plt.ylabel('$E[(S(X) - S(X^{*}))^2]$')
+if type_transf in ['binned_centre', 'binned_random']:
+    plt.xlabel('bin size, $h$')
+elif type_transf == 'multiplied_non_random':
+    plt.xlabel('$\\epsilon$')
+plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
+            +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
+            +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test) )
+  
+plt.show()
+    
+
+plt.figure()
 plt.plot(np.mean(abs_diff_ss_dictionary['none'], axis = 1),np.mean(mse_testdata_dictionary['none'] , axis = 1),'.', label = 'no penalty')
-plt.legend()
+for a in alpha:
+    plt.plot(np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),np.mean(mse_testdata_dictionary[str(a)] , axis = 1),'.', label = '$\\alpha=$' + str(a))
+plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
 plt.ylabel('predictive MSE')
 plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
-           +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
-           +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test)+'\n Transformation:'+str(type_regression))
+            +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
+            +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test)+'\n Transformation:'+str(type_regression))
 plt.show()
+
+want_the_betas = True;
     
+if type_regression in ['lasso', 'ridge']:
+    if want_the_betas:
+        plt.figure()
+        for a in alpha:
+            plt.plot([0]+ list(extra), np.mean(e1[str(a)],axis = 1),'.', label = '$\\alpha =$'+str(a))
+        plt.plot([0]+ list(extra), np.mean(e1['none'],axis = 1),'.', label = 'no penalty')
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.title('true $\\beta_0$ =' +str(parameters[0])+' and X $\sim$ N'+str(parameters[2:]))
+        plt.xlabel('bin_size')
+        plt.ylabel('$\\beta_0$')
+        plt.show()
+            
+        
+        plt.figure()
+        for a in alpha:
+            plt.plot([0]+ list(extra), np.mean(e2[str(a)],axis = 1), '.', label = '$\\alpha =$'+str(a))
+        plt.plot([0]+ list(extra), np.mean(e2['none'],axis = 1),'.', label = 'no penalty')
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.title('true $\\beta_1$ =' +str(parameters[1])+' and X $\sim$ N'+str(parameters[2:]))
+        plt.xlabel('bin_size')
+        plt.ylabel('$\\beta_1$')
+        plt.show()
+        
+        plt.figure()
+        for a in alpha:
+            plt.plot([0]+ list(extra), np.var(e1[str(a)],axis = 1),'.', label = '$\\alpha =$'+str(a))
+        plt.plot([0]+ list(extra), np.var(e1['none'],axis = 1),'.', label = 'no penalty')
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.title('true $\\beta_0$ =' +str(parameters[0])+' and X $\sim$ N'+str(parameters[2:]))
+        plt.xlabel('bin_size')
+        plt.ylabel('$var(\\beta_0$)')
+        plt.show()
+            
+        
+        plt.figure()
+        for a in alpha:
+            plt.plot([0]+ list(extra), np.var(e2[str(a)],axis = 1), '.', label = '$\\alpha =$'+str(a))
+        plt.plot([0]+ list(extra), np.var(e2['none'],axis = 1),'.', label = 'no penalty')
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.title('true $\\beta_1$ =' +str(parameters[1])+' and X $\sim$ N'+str(parameters[2:]))
+        plt.xlabel('bin_size')
+        plt.ylabel('$var(\\beta_1$)')
+        plt.show()
+
+
+
+
+##### LASSO
+
+# type_regression = 'lasso';
+# abs_diff_ss_dictionary, mse_testdata_dictionary, e1, e2 = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, type_regression, alpha, want_the_betas)
+
+
+# plt.figure()
+# plt.plot(np.mean(abs_diff_ss_dictionary['none'], axis = 1),np.mean(mse_testdata_dictionary['none'] , axis = 1),'.', label = 'no penalty')
+# for a in alpha:
+#     plt.plot(np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),np.mean(mse_testdata_dictionary[str(a)] , axis = 1),'.', label = '$\\alpha=$' + str(a))
+# plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+# plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
+# plt.ylabel('predictive MSE')
+# plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
+#             +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
+#             +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test)+'\n Transformation:'+str(type_regression))
+# plt.show()
+
+
+# ## looking at the BETAS
+
+# if type_regression in ['lasso', 'ridge']:
+#     if want_the_betas:
+#         plt.figure()
+#         for a in alpha:
+#             plt.plot([0]+ list(extra), np.mean(e1[str(a)],axis = 1),'.', label = '$\\alpha =$'+str(a))
+#         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+#         plt.title('true $\\beta_0$ =' +str(parameters[0])+' and X $\sim$ N'+str(parameters[2:]))
+#         plt.xlabel('bin_size')
+#         plt.ylabel('$\\beta_0$')
+#         plt.show()
+            
+        
+#         plt.figure()
+#         for a in alpha:
+#             plt.plot([0]+ list(extra), np.mean(e2[str(a)],axis = 1), '.', label = '$\\alpha =$'+str(a))
+#         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+#         plt.title('true $\\beta_1$ =' +str(parameters[1])+' and X $\sim$ N'+str(parameters[2:]))
+#         plt.xlabel('bin_size')
+#         plt.ylabel('$\\beta_1$')
+#         plt.show()
+        
+        
+
+        
+        
+        
+        
+# type_regression = 'cart'
+# abs_diff_ss_dictionary, mse_testdata_dictionary = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, type_regression, alpha = [])
+
+
+# plt.figure()
+# plt.plot(np.mean(abs_diff_ss_dictionary['none'], axis = 1),np.mean(mse_testdata_dictionary['none'] , axis = 1),'.', label = 'no penalty')
+# plt.legend()
+# plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
+# plt.ylabel('predictive MSE')
+# plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
+#             +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
+#             +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test)+'\n Transformation:'+str(type_regression))
+# plt.show()
+
     
 # plotting_against_mse(abs_diff_ss, mse_testdata, type_transf, parameters, size_test, size_train, how_many_it)
 # plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameters, size_test, size_train, how_many_it, True)

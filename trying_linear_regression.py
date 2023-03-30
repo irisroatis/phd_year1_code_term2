@@ -11,11 +11,14 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 import pandas as pd
 
-def put_in_bins(data, bins):
+def put_in_bins(data, bins, ranking = False):
     digitized = np.digitize(data,bins)
-    midpoints_bins = (bins[:len(bins)-1] + bins[1:])/2
-    new_data = midpoints_bins[digitized-1]
-    return new_data
+    if not ranking:
+        midpoints_bins = (bins[:len(bins)-1] + bins[1:])/2
+        new_data = midpoints_bins[digitized-1]
+        return new_data
+    else:
+        return digitized
 
 beta_0_true = 0.4
 beta_1_true = 0.6
@@ -63,7 +66,7 @@ for iteration in range(how_many):
     residual_variance_corrected[0][iteration] =   residual_variance[0][iteration] 
     for i in range(len(list_bin_sizes)):
         bins = list_of_bins[i] 
-        new_X = put_in_bins(X, bins)
+        new_X = put_in_bins(X, bins, ranking = True)
         error_epsilon = np.var(new_X - X)
         variance_sample = np.var(new_X)
         regressor = LinearRegression()  
@@ -124,18 +127,18 @@ plt.title('Corrected Estimated Gradient in Linear Regression')
 plt.legend()
 plt.show()
 
-# Pandas dataframe
-data3 = pd.DataFrame(dictionary_corrected_grad_error)
-# Plot the dataframe
-ax = data3[['no \n binning','0.01','0.05','0.1','0.25', '0.35', '0.5', '0.65', '0.75', '0.9', '1', '1.25', '1.5','2']].plot(kind='box', title='boxplot')
-plt.axhline(beta_1_true,color = 'r',linestyle = '--',linewidth = 1, label = 'true $\\beta_1$')
-plt.xlabel('bin size, $h$')
-plt.ylabel('$\\hat{\\beta}^{*} - \\beta$')
-plt.xlabel('bin size, $h$')
-plt.ylabel('corrected $\\hat{\\beta_1^{*}}$')
-plt.title('Corrected Gradient Error-in-Variables in Linear Regression')
-plt.legend()
-plt.show()
+# # Pandas dataframe
+# data3 = pd.DataFrame(dictionary_corrected_grad_error)
+# # Plot the dataframe
+# ax = data3[['no \n binning','0.01','0.05','0.1','0.25', '0.35', '0.5', '0.65', '0.75', '0.9', '1', '1.25', '1.5','2']].plot(kind='box', title='boxplot')
+# plt.axhline(beta_1_true,color = 'r',linestyle = '--',linewidth = 1, label = 'true $\\beta_1$')
+# plt.xlabel('bin size, $h$')
+# plt.ylabel('$\\hat{\\beta}^{*} - \\beta$')
+# plt.xlabel('bin size, $h$')
+# plt.ylabel('corrected $\\hat{\\beta_1^{*}}$')
+# plt.title('Corrected Gradient Error-in-Variables in Linear Regression')
+# plt.legend()
+# plt.show()
 
 ##### plots residual variance 
 

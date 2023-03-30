@@ -83,11 +83,14 @@ def logistic(x):
     logistic =  1/(1+np.exp(-x))
     return logistic
 
-def put_in_bins(data, bins):
+def put_in_bins(data, bins, ranking = False):
     digitized = np.digitize(data,bins)
-    midpoints_bins = (bins[:len(bins)-1] + bins[1:])/2
-    new_data = midpoints_bins[digitized-1]
-    return new_data
+    if not ranking:
+        midpoints_bins = (bins[:len(bins)-1] + bins[1:])/2
+        new_data = midpoints_bins[digitized-1]
+        return new_data
+    else:
+        return digitized
 
 size = 1000
 
@@ -147,7 +150,7 @@ for iteration in range(how_many):
    
     for i in range(len(list_bin_sizes)):
         bins = list_of_bins[i] 
-        new_X = put_in_bins(x, bins)
+        new_X = put_in_bins(x, bins, ranking = True)
         
         variance_sample = np.var(new_X)
      
