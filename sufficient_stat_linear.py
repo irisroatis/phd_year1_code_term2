@@ -272,7 +272,7 @@ def plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameters, size_
 
 how_many_it = 300
 size_test, size_train = 1000, 100
-parameters = [1, 0.2, 1, 1];
+parameters = [0.2, 1, 1, 1];
 # type_transf = 'multiplied_non_random'
 type_transf = 'binned_centre'
 
@@ -327,7 +327,7 @@ alpha = [0.01, 0.1,0.15, 0.25, 0.5, 0.75, 1, 2, 5, 10]
 #### RIDGE
 
 # alpha = np.round(10 ** np.linspace(0.1, 3, 10),0)
-alpha = np.array([1, 3, 5, 7, 10, 15, 25, 40, 50, 80, 100])
+alpha = np.array([1, 3, 5, 7, 9, 10, 15, 20, 25, 35, 40, 50, 65, 80, 90, 100, 150, 200])
 alpha = np.concatenate((np.array([0.01, 0.1, 0.25, 0.5, 0.75]), alpha))
 type_regression = 'ridge';
 want_the_betas = True;
@@ -411,9 +411,8 @@ if type_regression in ['lasso', 'ridge']:
 
 if want_the_betas:
     
-    table0 = [[str(type_regression),'alpha', 'h giving closest beta0','abs difference']]
+    table0 = [[str(type_regression),'alpha', 'h giving closest beta0','abs difference 0', 'h giving closest beta1', 'abs difference 1']]
     
-    table1 = [[str(type_regression),'alpha', 'h giving closest beta1','abs difference']];
     
     corresponding_bin_sizes0 = np.zeros_like(alpha)   
     corresponding_differences0 = np.zeros_like(alpha)
@@ -429,17 +428,26 @@ if want_the_betas:
         diff_parameter0 = beta0_nopenalty - aim0
         corresponding_bin_sizes0[index] = extra[np.argmin(abs(diff_parameter0))]
         corresponding_differences0[index] = abs(diff_parameter0[np.argmin(abs(diff_parameter0))])
-        table0.append([' ', str(a), str(corresponding_bin_sizes0[index]), str( corresponding_differences0[index] )])
+      
         
         aim1 = np.mean(e2[str(a)],axis = 1)[0] 
         diff_parameter1 = beta1_nopenalty - aim1
         corresponding_bin_sizes1[index] = extra[np.argmin(abs(diff_parameter1))]
         corresponding_differences1[index] = abs(diff_parameter1[np.argmin(abs(diff_parameter1))])
-        table1.append([' ', str(a), str(corresponding_bin_sizes1[index]), str( corresponding_differences1[index] )])
+        table0.append([' ', str(a), str(corresponding_bin_sizes0[index]), str( corresponding_differences0[index] ),str(corresponding_bin_sizes1[index]), str( corresponding_differences1[index] )])
+       
         
-        
+plt.plot(alpha, corresponding_bin_sizes0,'.',label='for $\\beta_0$')
+plt.plot(alpha, corresponding_bin_sizes1,'.',label='for $\\beta_1$')
+plt.xlabel('$\\alpha$')
+plt.ylabel('corresponding $h$')
+plt.legend()
+plt.title('For each penalty $\\alpha$ ridge regression is done (no binning) and \n we find the no penalty equivalent parameter with a certain $h$')
+plt.show()
+
+
 print(tabulate(table0))
-print(tabulate(table1))
+
 
 ##### LASSO
 
