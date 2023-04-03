@@ -144,8 +144,7 @@ def ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, 
     print('For '+str(type_regression)+ ' regression: \n')
     for iteration in range(how_many_it):
         
-        if iteration % 20 == 0:
-            print(np.round((iteration+1)/how_many_it,2))    # code progress
+     
         
         X,y = generate_test(e, std, size_train, beta_0_true, beta_1_true)
    
@@ -269,32 +268,149 @@ def plotting_width_against_ss(abs_diff_ss, extra, type_transf, parameters, size_
     
     plt.show()
 
+def plotting_betas(extra, type_regression, alpha, e1, e2):
+    if type_regression in ['lasso', 'ridge']:
 
-how_many_it = 300
+            plt.figure()
+            for a in alpha:
+                plt.plot([0]+ list(extra), np.mean(e1[str(a)],axis = 1),'.', label = '$\\alpha =$'+str(a))
+            plt.plot([0]+ list(extra), np.mean(e1['none'],axis = 1),'.', label = 'no penalty')
+            plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+            plt.title('true $\\beta_0$ =' +str(parameters[0])+' and X $\sim$ N'+str(parameters[2:]))
+            plt.xlabel('bin_size')
+            plt.ylabel('$\\beta_0$')
+            plt.show()
+                
+            
+            plt.figure()
+            for a in alpha:
+                plt.plot([0]+ list(extra), np.mean(e2[str(a)],axis = 1), '.', label = '$\\alpha =$'+str(a))
+            plt.plot([0]+ list(extra), np.mean(e2['none'],axis = 1),'.', label = 'no penalty')
+            plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+            plt.title('true $\\beta_1$ =' +str(parameters[1])+' and X $\sim$ N'+str(parameters[2:]))
+            plt.xlabel('bin_size')
+            plt.ylabel('$\\beta_1$')
+            plt.show()
+            
+            plt.figure()
+            for a in alpha:
+                plt.plot([0]+ list(extra), np.var(e1[str(a)],axis = 1),'.', label = '$\\alpha =$'+str(a))
+            plt.plot([0]+ list(extra), np.var(e1['none'],axis = 1),'.', label = 'no penalty')
+            plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+            plt.title('true $\\beta_0$ =' +str(parameters[0])+' and X $\sim$ N'+str(parameters[2:]))
+            plt.xlabel('bin_size')
+            plt.ylabel('$var(\\beta_0$)')
+            plt.show()
+                
+            
+            plt.figure()
+            for a in alpha:
+                plt.plot([0]+ list(extra), np.var(e2[str(a)],axis = 1), '.', label = '$\\alpha =$'+str(a))
+            plt.plot([0]+ list(extra), np.var(e2['none'],axis = 1),'.', label = 'no penalty')
+            plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+            plt.title('true $\\beta_1$ =' +str(parameters[1])+' and X $\sim$ N'+str(parameters[2:]))
+            plt.xlabel('bin_size')
+            plt.ylabel('$var(\\beta_1$)')
+            plt.show()
+    
+    else:
+        print('Not lasso or ridge')
+        
+
+def plot_connection_bin_penalty(extra, type_regression, alpha, e1, e2, parameters):
+
+    table0 = [[str(type_regression),'alpha', 'h giving closest beta0','abs difference 0', 'h giving closest beta1', 'abs difference 1']]
+    
+    
+    corresponding_bin_sizes0 = np.zeros_like(alpha)   
+    corresponding_differences0 = np.zeros_like(alpha)
+    corresponding_bin_sizes1 = np.zeros_like(alpha)   
+    corresponding_differences1 = np.zeros_like(alpha)
+    
+    beta0_nopenalty = np.mean(e1['none'],axis = 1)
+    beta1_nopenalty = np.mean(e2['none'],axis = 1)
+   
+    for index in range(len(alpha)):
+        a = alpha[index]
+        
+        aim0 = np.mean(e1[str(a)],axis = 1)[0] 
+        diff_parameter0 = beta0_nopenalty - aim0
+        corresponding_bin_sizes0[index] = extra[np.argmin(abs(diff_parameter0))]
+        corresponding_differences0[index] = abs(diff_parameter0[np.argmin(abs(diff_parameter0))])
+      
+        
+        aim1 = np.mean(e2[str(a)],axis = 1)[0] 
+        diff_parameter1 = beta1_nopenalty - aim1
+        corresponding_bin_sizes1[index] = extra[np.argmin(abs(diff_parameter1))]
+        corresponding_differences1[index] = abs(diff_parameter1[np.argmin(abs(diff_parameter1))])
+        table0.append([' ', str(a), str(corresponding_bin_sizes0[index]), str( corresponding_differences0[index] ),str(corresponding_bin_sizes1[index]), str( corresponding_differences1[index] )])
+       
+            
+    plt.plot(alpha, corresponding_bin_sizes0,'.',label='for $\\beta_0$')
+    plt.plot(alpha, corresponding_bin_sizes1,'.',label='for $\\beta_1$')
+    plt.xlabel('$\\alpha$')
+    plt.ylabel('corresponding $h$')
+    plt.legend()
+    plt.title('For each penalty $\\alpha$ ridge regression is done (no binning) and \n we find the no penalty equivalent parameter with a certain $h$ \n parameters:'+str(parameters))
+    plt.show()
+
+
+    print(tabulate(table0))
+    
+    return corresponding_bin_sizes0, corresponding_bin_sizes1
+        
+
+def plot_binsize_against_ss(extra, abs_diff_ss_dictionary, type_transf, parameters, size_train, size_test, alpha = None):
+    plt.figure()
+    plt.plot([0] + list(extra),np.mean(abs_diff_ss_dictionary['none'], axis = 1),'.', label = 'no penalty')
+    for a in alpha:
+        plt.plot([0] + list(extra),np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),'.', label = '$\\alpha=$' + str(a))
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.ylabel('$E[(S(X) - S(X^{*}))^2]$')
+    if type_transf in ['binned_centre', 'binned_random']:
+        plt.xlabel('bin size, $h$')
+    elif type_transf == 'multiplied_non_random':
+        plt.xlabel('$\\epsilon$')
+    plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
+                +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
+                +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test) )
+      
+    plt.show()
+
+
+def plot_ss_against_mse(abs_diff_ss_dictionary, mse_testdata_dictionary, type_transf, parameters, size_train, size_test, alpha = None):
+
+
+    plt.figure()
+    plt.plot(np.mean(abs_diff_ss_dictionary['none'], axis = 1),np.mean(mse_testdata_dictionary['none'] , axis = 1),'.', label = 'no penalty')
+    for a in alpha:
+        plt.plot(np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),np.mean(mse_testdata_dictionary[str(a)] , axis = 1),'.', label = '$\\alpha=$' + str(a))
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
+    plt.ylabel('predictive MSE')
+    plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
+                +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
+                +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test)+'\n Transformation:'+str(type_transf))
+    plt.show()
+   
+    
+    
+how_many_it = 100
 size_test, size_train = 1000, 100
-parameters = [0.2, 1, 1, 1];
 # type_transf = 'multiplied_non_random'
 type_transf = 'binned_centre'
 
 
 if type_transf in ['binned_centre', 'binned_random','rank']:
     max_bin_size = 15
-    extra = np.linspace(0.01, max_bin_size, 70)
+    extra = np.linspace(0.01, max_bin_size, 200)
 elif type_transf == 'multiplied_non_random':
     extra = np.linspace(0.01, 5, 50)
 
 
 
 
-############ DIFFERENT PLOTS FOR RIDGE AND LASSO REGRESSION
-
-#### Allows for the comparison against ridge regression for various penalties 
-alpha = [0.01, 0.1,0.15, 0.25, 0.5, 0.75, 1, 2, 5, 10]
-# alpha = [12]
-
-
-
-# ##### SIMPLE
+# ##### SIMPLE REGRESSION
 
 # type_regression = 'simple'
 # abs_diff_ss_dictionary, mse_testdata_dictionary,e1,e2 = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, type_regression, alpha = [], want_the_betas=True)
@@ -324,129 +440,52 @@ alpha = [0.01, 0.1,0.15, 0.25, 0.5, 0.75, 1, 2, 5, 10]
 
 # plt.plot([0]+ list(extra), np.mean(e1['none'],axis = 1),'.')
 
-#### RIDGE
 
-# alpha = np.round(10 ** np.linspace(0.1, 3, 10),0)
-alpha = np.array([1, 3, 5, 7, 9, 10, 15, 20, 25, 35, 40, 50, 65, 80, 90, 100, 150, 200])
+
+#### RIDGE REGRESSION
+
+set_of_parameters = [[0.2, 1, 0, 1], [0.2, 0.2, 0, 1], [1, 5, 0, 1], [0.2, 10, 0, 1]]
+set_of_parameters = [[10,10,0,1], [1, 10, 0, 1], [0.2, 10, 0, 1], [1, 100, 0, 1]]
+
+alpha = np.array([1, 3, 5, 7, 9, 10, 15, 20, 25, 35, 40, 50, 65, 80, 90, 100])
 alpha = np.concatenate((np.array([0.01, 0.1, 0.25, 0.5, 0.75]), alpha))
+# alpha = np.array([1])
 type_regression = 'ridge';
 want_the_betas = True;
-abs_diff_ss_dictionary, mse_testdata_dictionary, e1, e2 = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, type_regression, alpha, want_the_betas)
 
+dictionary_beta0 = {}
+dictionary_beta1 = {}
 
-plt.figure()
-plt.plot([0] + list(extra),np.mean(abs_diff_ss_dictionary['none'], axis = 1),'.', label = 'no penalty')
-for a in alpha:
-    plt.plot([0] + list(extra),np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),'.', label = '$\\alpha=$' + str(a))
-plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-plt.ylabel('$E[(S(X) - S(X^{*}))^2]$')
-if type_transf in ['binned_centre', 'binned_random']:
-    plt.xlabel('bin size, $h$')
-elif type_transf == 'multiplied_non_random':
-    plt.xlabel('$\\epsilon$')
-plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
-            +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
-            +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test) )
-  
-plt.show()
+for i in range(len(set_of_parameters)):
+    parameters  = set_of_parameters[i]
+    abs_diff_ss_dictionary, mse_testdata_dictionary, e1, e2 = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, type_regression, alpha, want_the_betas)
+    
+    plotting_betas(extra, type_regression, alpha, e1, e2)
+    c0, c1 = plot_connection_bin_penalty(extra, type_regression, alpha, e1, e2, parameters)
+    plot_binsize_against_ss(extra, abs_diff_ss_dictionary, type_transf, parameters, size_train, size_test, alpha)
+    plot_ss_against_mse(abs_diff_ss_dictionary, mse_testdata_dictionary, type_transf, parameters, size_train, size_test, alpha)
+    
+    dictionary_beta0[str(i)] = c0
+    dictionary_beta1[str(i)] = c1
     
 
-plt.figure()
-plt.plot(np.mean(abs_diff_ss_dictionary['none'], axis = 1),np.mean(mse_testdata_dictionary['none'] , axis = 1),'.', label = 'no penalty')
-for a in alpha:
-    plt.plot(np.mean(abs_diff_ss_dictionary[str(a)], axis = 1),np.mean(mse_testdata_dictionary[str(a)] , axis = 1),'.', label = '$\\alpha=$' + str(a))
-plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
-plt.ylabel('predictive MSE')
-plt.title('Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])
-            +', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) 
-            +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test)+'\n Transformation:'+str(type_regression))
-plt.show()
-
-want_the_betas = True;
-    
-if type_regression in ['lasso', 'ridge']:
-    if want_the_betas:
-        plt.figure()
-        for a in alpha:
-            plt.plot([0]+ list(extra), np.mean(e1[str(a)],axis = 1),'.', label = '$\\alpha =$'+str(a))
-        plt.plot([0]+ list(extra), np.mean(e1['none'],axis = 1),'.', label = 'no penalty')
-        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-        plt.title('true $\\beta_0$ =' +str(parameters[0])+' and X $\sim$ N'+str(parameters[2:]))
-        plt.xlabel('bin_size')
-        plt.ylabel('$\\beta_0$')
-        plt.show()
-            
-        
-        plt.figure()
-        for a in alpha:
-            plt.plot([0]+ list(extra), np.mean(e2[str(a)],axis = 1), '.', label = '$\\alpha =$'+str(a))
-        plt.plot([0]+ list(extra), np.mean(e2['none'],axis = 1),'.', label = 'no penalty')
-        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-        plt.title('true $\\beta_1$ =' +str(parameters[1])+' and X $\sim$ N'+str(parameters[2:]))
-        plt.xlabel('bin_size')
-        plt.ylabel('$\\beta_1$')
-        plt.show()
-        
-        plt.figure()
-        for a in alpha:
-            plt.plot([0]+ list(extra), np.var(e1[str(a)],axis = 1),'.', label = '$\\alpha =$'+str(a))
-        plt.plot([0]+ list(extra), np.var(e1['none'],axis = 1),'.', label = 'no penalty')
-        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-        plt.title('true $\\beta_0$ =' +str(parameters[0])+' and X $\sim$ N'+str(parameters[2:]))
-        plt.xlabel('bin_size')
-        plt.ylabel('$var(\\beta_0$)')
-        plt.show()
-            
-        
-        plt.figure()
-        for a in alpha:
-            plt.plot([0]+ list(extra), np.var(e2[str(a)],axis = 1), '.', label = '$\\alpha =$'+str(a))
-        plt.plot([0]+ list(extra), np.var(e2['none'],axis = 1),'.', label = 'no penalty')
-        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-        plt.title('true $\\beta_1$ =' +str(parameters[1])+' and X $\sim$ N'+str(parameters[2:]))
-        plt.xlabel('bin_size')
-        plt.ylabel('$var(\\beta_1$)')
-        plt.show()
-
-if want_the_betas:
-    
-    table0 = [[str(type_regression),'alpha', 'h giving closest beta0','abs difference 0', 'h giving closest beta1', 'abs difference 1']]
-    
-    
-    corresponding_bin_sizes0 = np.zeros_like(alpha)   
-    corresponding_differences0 = np.zeros_like(alpha)
-    corresponding_bin_sizes1 = np.zeros_like(alpha)   
-    corresponding_differences1 = np.zeros_like(alpha)
-    
-    beta0_nopenalty = np.mean(e1['none'],axis = 1)
-    beta1_nopenalty = np.mean(e2['none'],axis = 1)
-    for index in range(len(alpha)):
-        a = alpha[index]
-        
-        aim0 = np.mean(e1[str(a)],axis = 1)[0] 
-        diff_parameter0 = beta0_nopenalty - aim0
-        corresponding_bin_sizes0[index] = extra[np.argmin(abs(diff_parameter0))]
-        corresponding_differences0[index] = abs(diff_parameter0[np.argmin(abs(diff_parameter0))])
-      
-        
-        aim1 = np.mean(e2[str(a)],axis = 1)[0] 
-        diff_parameter1 = beta1_nopenalty - aim1
-        corresponding_bin_sizes1[index] = extra[np.argmin(abs(diff_parameter1))]
-        corresponding_differences1[index] = abs(diff_parameter1[np.argmin(abs(diff_parameter1))])
-        table0.append([' ', str(a), str(corresponding_bin_sizes0[index]), str( corresponding_differences0[index] ),str(corresponding_bin_sizes1[index]), str( corresponding_differences1[index] )])
-       
-        
-plt.plot(alpha, corresponding_bin_sizes0,'.',label='for $\\beta_0$')
-plt.plot(alpha, corresponding_bin_sizes1,'.',label='for $\\beta_1$')
-plt.xlabel('$\\alpha$')
-plt.ylabel('corresponding $h$')
-plt.legend()
-plt.title('For each penalty $\\alpha$ ridge regression is done (no binning) and \n we find the no penalty equivalent parameter with a certain $h$')
-plt.show()
 
 
-print(tabulate(table0))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ##### LASSO
