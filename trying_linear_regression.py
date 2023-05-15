@@ -96,12 +96,12 @@ for i in range(len(list_bin_sizes)):
 
 #### plot intercept --> it has no correction
 
-# # Pandas dataframe
-# data0 = pd.DataFrame(dictionary_beta0)
-# # Plot the dataframe
-# ax = data0[['no binning','0.01','0.05','0.1','0.5', '0.75', '1', '1.5', '2', '3', '4']].plot(kind='box', title='boxplot')
-# # Display the plot
-# plt.show()
+# Pandas dataframe
+data0 = pd.DataFrame(dictionary_beta0)
+# Plot the dataframe
+ax = data0[['no \n binning','0.01','0.05','0.1','0.25', '0.35', '0.5', '0.65', '0.75', '0.9', '1', '1.25', '1.5','2']].plot(kind='box', title='boxplot')
+# Display the plot
+plt.show()
 
 # Pandas dataframe
 data1 = pd.DataFrame(dictionary_beta1)

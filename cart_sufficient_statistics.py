@@ -220,29 +220,29 @@ if type_transf in ['binned_centre', 'binned_random','rank']:
 elif type_transf == 'multiplied_non_random':
     extra = np.linspace(0.01, 5, 50)
 
-abs_diff_ss_dictionary, mse_testdata_dictionary = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra=extra, pruning = 'postpruning')
+# abs_diff_ss_dictionary, mse_testdata_dictionary = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra=extra, pruning = 'postpruning')
 
 
-# #### SOME PRE-PRUNING
+#### SOME PRE-PRUNING
 
-# string_title = 'Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])+', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test)+'\n Transformation: cart'
+string_title = 'Linear Regression - Transformation: '+type_transf+', \n Parameters: $\\beta_0$ =' +str(parameters[0])+', $\\beta_1$ = ' +str(parameters[1]) +', $\\mu$ = ' +str(parameters[2]) +' $\\sigma^2$ = ' +str(parameters[3]**2) +'\n Sizes: train: ' +str(size_train)+', test: ' +str(size_test)+'\n Transformation: cart'
 
-# list_max_depth = [5,7]
-# list_min_samples_split=[2, 4]
-# list_min_samples_leaf=[2, 3]
+list_max_depth = [5,7]
+list_min_samples_split=[2, 4]
+list_min_samples_leaf=[2, 3]
 
-# plt.figure()
-# for max_depth in list_max_depth:
-#     for min_samples_split in list_min_samples_split:
-#         for min_samples_leaf in list_min_samples_leaf:
-#             abs_diff_ss_dictionary, mse_testdata_dictionary = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, max_depth=max_depth, min_samples_split=  min_samples_split, min_samples_leaf = min_samples_leaf)
-#             plt.plot(np.mean(abs_diff_ss_dictionary['none'], axis = 1),np.mean(mse_testdata_dictionary['none'] , axis = 1),'.', label = str(max_depth) +',' +str(min_samples_split) +','+str(min_samples_leaf) )
+plt.figure()
+for max_depth in list_max_depth:
+    for min_samples_split in list_min_samples_split:
+        for min_samples_leaf in list_min_samples_leaf:
+            abs_diff_ss_dictionary, mse_testdata_dictionary = ss_against_mse(how_many_it, parameters, size_test, size_train, type_transf, extra, max_depth=max_depth, min_samples_split=  min_samples_split, min_samples_leaf = min_samples_leaf)
+            plt.plot(np.mean(abs_diff_ss_dictionary['none'], axis = 1),np.mean(mse_testdata_dictionary['none'] , axis = 1),'.', label = str(max_depth) +',' +str(min_samples_split) +','+str(min_samples_leaf) )
             
             
-# plt.legend()
-# plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
-# plt.ylabel('predictive MSE')
-# plt.title(string_title)
-# plt.show()
+plt.legend()
+plt.xlabel('$E[(S(X) - S(X^{*}))^2]$')
+plt.ylabel('predictive MSE')
+plt.title(string_title)
+plt.show()
 
     
