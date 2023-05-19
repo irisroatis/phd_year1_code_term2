@@ -23,6 +23,10 @@ def dataset_to_Xandy(dataset, target_variable):
     y = dataset.loc[:, dataset.columns == target_variable]
     return X, y
 
+
+def standardise(X):
+    return (X - np.mean(X)) / np.std(X)
+
 def split_dataset(X,y, randomlist, not_in_randomlist):
     X_train = X.iloc[randomlist,:]
     y_train = y.iloc[randomlist,:]
@@ -76,14 +80,15 @@ def plot_boxplots_confusion(confusion_matrix,entry):
 # df = pd.read_csv('datasets/heartdataset.csv')
 # categorical_cols = ['cp','thal','slope','ca','restecg'] # Putting in this all the categorical columns
 # target_variable = 'target' # Making sure the name of the target variable is known
+# continuous_variables = ['age','trestbps','chol','thalach','oldpeak']
+# binary_variables = ['sex','fbs','exang']
 
 
 
-
-######### AIRLINE DATASET  
+######## AIRLINE DATASET  
 
 df = pd.read_csv('datasets/airline_dataset.csv')
-categorical_cols = ['MONTH','DAY_OF_WEEK','DEP_TIME_BLK','DISTANCE_GROUP','SEGMENT_NUMBER','CARRIER_NAME', 'DEPARTING_AIRPORT','PREVIOUS_AIRPORT'] # Putting in this all the categorical columns
+categorical_variables = ['MONTH','DAY_OF_WEEK','DEP_TIME_BLK','DISTANCE_GROUP','SEGMENT_NUMBER','CARRIER_NAME', 'DEPARTING_AIRPORT','PREVIOUS_AIRPORT'] # Putting in this all the categorical columns
 target_variable = 'DEP_DEL15' # Making sure the name of the target variable is known
 
 df0 = df.loc[df[target_variable] ==0 ]
@@ -98,6 +103,10 @@ df = pd.concat([df0, df1])
 
 
 
+continuous_variables = list(set(df.keys()) - set(categorical_variables + [target_variable]))
+
+
+
 
 
 
@@ -105,17 +114,57 @@ df = pd.concat([df0, df1])
 
 # df = pd.read_csv('datasets/cardataset.csv')
 # df = df.drop('policy_id',axis = 1)
-# categorical_cols = ['area_cluster','make', 'segment','model', 'fuel_type','max_torque','max_power','engine_type','steering_type','ncap_rating'] # Putting in this all the categorical columns
+# categorical_cols = ['area_cluster','make', 'segment','model', 'fuel_type','max_power','engine_type','steering_type','ncap_rating'] # Putting in this all the categorical columns
 # target_variable = 'is_claim' # Making sure the name of the target variable is known
 
 # binary_cols = ['gear_box','is_esc','is_adjustable_steering','is_tpms',
 #                 'is_parking_sensors','is_parking_camera','rear_brakes_type',
-#                 'cylinder','transmission_type','is_front_fog_lights'
+#                     'cylinder','transmission_type','is_front_fog_lights'
 #                 ,'is_rear_window_wiper','is_rear_window_washer'
 #                 ,'is_rear_window_defogger', 'is_brake_assist', 'is_power_door_locks',
 #                 'is_central_locking','is_power_steering','is_driver_seat_height_adjustable',
 #                 'is_day_night_rear_view_mirror','is_ecw','is_speed_alert']
 
+# torque = df['max_torque']
+# power = df['max_power']
+
+# list1 = []
+# list2 = []
+# list3 = []
+# list4 = []
+
+# for i in range(len(torque)):
+#     string = torque[i]
+#     index = string.find('Nm')
+#     index1 = string.find('rpm')
+#     index2 = string.find('@')
+#     list1.append (float(string[0:index])) 
+#     list2.append (float(string[index2+1:index1]))
+    
+#     string2 = power[i]
+#     index = string2.find('bhp')
+#     index1 = string2.find('rpm')
+#     index2 = string2.find('@')
+#     list3.append (float(string2[0:index]) )
+#     list4.append (float(string2[index2+1:index1]))
+    
+ 
+# df['max_torque'] = list1
+# df['max_torque_rpm'] = list2
+
+# df['max_power'] = list3
+# df['max_power_rpm'] = list4
+    
+
+
+
+
+# continuous_variables = ['policy_tenure', 'age_of_car', 'age_of_policyholder',
+#        'population_density', 'displacement','turning_radius',
+#        'length', 'width', 'height', 'gross_weight', 'max_torque_rpm',
+#        'max_power_rpm']
+
+# see = df[continuous_variables]
 # ### make sure binary variables are 0 and 1
 # labelencoder = ce.OrdinalEncoder(cols=binary_cols)
 # df = labelencoder.fit_transform(df)
@@ -138,7 +187,7 @@ df = pd.concat([df0, df1])
 
 
 
-# ########### STROKE PREDICTION
+########### STROKE PREDICTION
 # df = pd.read_csv('datasets/stroke_dataset.csv')
 # df = df.drop('id',axis = 1)
 # df = df.dropna().reset_index(drop=True)
@@ -178,7 +227,7 @@ df = pd.concat([df0, df1])
 
 size = df.shape[0] # size of the dataset
 # Seeing if they are indeed categorical
-for cat in categorical_cols:
+for cat in categorical_variables:
     print(df[cat].value_counts())
 
 # Seeing if the data is balanced
@@ -186,6 +235,9 @@ plt.figure()
 df[target_variable].value_counts().plot(kind='bar')
 plt.title('Test how many target 0 vs 1')
 plt.show()
+
+for cont_col in continuous_variables:
+    df[cont_col] = standardise(df[cont_col])
 
 
 how_many_iterations = 20 # how many CV folds
@@ -205,15 +257,15 @@ confusion_matrix['effect'] =  {'00':np.zeros((how_many_iterations,)),'10':np.zer
                                'accuracy':np.zeros((how_many_iterations,)), 'auc':np.zeros((how_many_iterations,))}
 
 out_of = size - 4 * size // 5
+how_many_0s = len(df[df[target_variable] == 0])
+how_many_1s = len(df[df[target_variable] == 1])
 
 
 for iteration in range(how_many_iterations):
     
     # Randomising the CV fold
-    randomlist = random.sample(range(0, size),  4 * size// 5)
+    randomlist = random.sample(list(df[df[target_variable]==0].index.values), 4 * how_many_0s // 5) + random.sample(list(df[df[target_variable]==1].index.values), 4 * how_many_1s // 5)
     not_in_randomlist = list(set(range(0,size)) - set(randomlist))
- 
-    
     
     ### PREDICTION WITHOUT THE CATEGORICAL ONES
     
