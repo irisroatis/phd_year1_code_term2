@@ -87,23 +87,23 @@ def plot_boxplots_confusion(confusion_matrix,entry):
 
 ######## AIRLINE DATASET  
 
-df = pd.read_csv('datasets/airline_dataset.csv')
-categorical_variables = ['MONTH','DAY_OF_WEEK','DEP_TIME_BLK','DISTANCE_GROUP','SEGMENT_NUMBER','CARRIER_NAME', 'DEPARTING_AIRPORT','PREVIOUS_AIRPORT'] # Putting in this all the categorical columns
-target_variable = 'DEP_DEL15' # Making sure the name of the target variable is known
+# df = pd.read_csv('datasets/airline_dataset.csv')
+# categorical_variables = ['MONTH','DAY_OF_WEEK','DEP_TIME_BLK','DISTANCE_GROUP','SEGMENT_NUMBER','CARRIER_NAME', 'DEPARTING_AIRPORT','PREVIOUS_AIRPORT'] # Putting in this all the categorical columns
+# target_variable = 'DEP_DEL15' # Making sure the name of the target variable is known
 
-df0 = df.loc[df[target_variable] ==0 ]
-df1 = df.loc[df[target_variable] ==1 ]
-how_many_0 = df0.shape[0]
-how_many_1 = df1.shape[0]
-random_indices = random.sample(range(0, how_many_0), how_many_0 - 4000)
-df0 = df0.drop(df0.index[random_indices])
-random_indices = random.sample(range(0, how_many_1), how_many_1 - 4000)
-df1 = df1.drop(df1.index[random_indices])
-df = pd.concat([df0, df1])
+# df0 = df.loc[df[target_variable] ==0 ]
+# df1 = df.loc[df[target_variable] ==1 ]
+# how_many_0 = df0.shape[0]
+# how_many_1 = df1.shape[0]
+# random_indices = random.sample(range(0, how_many_0), how_many_0 - 4000)
+# df0 = df0.drop(df0.index[random_indices])
+# random_indices = random.sample(range(0, how_many_1), how_many_1 - 4000)
+# df1 = df1.drop(df1.index[random_indices])
+# df = pd.concat([df0, df1])
 
 
 
-continuous_variables = list(set(df.keys()) - set(categorical_variables + [target_variable]))
+# continuous_variables = list(set(df.keys()) - set(categorical_variables + [target_variable]))
 
 
 
